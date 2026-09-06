@@ -170,6 +170,116 @@ h1,
     border: 3px solid var(--ink);
 }
 
+.experience {
+    padding: 4rem 0 5rem;
+    border-top: 1px solid var(--line);
+}
+
+.section-kicker {
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-dark);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.section-title {
+    font-family: "Space Grotesk", -apple-system, sans-serif;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    margin-bottom: 2.5rem;
+}
+
+.timeline {
+    position: relative;
+    display: grid;
+    gap: 1.75rem;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: "";
+    position: absolute;
+    top: 0.4rem;
+    bottom: 0.4rem;
+    left: 0.3rem;
+    width: 2px;
+    background-color: var(--line);
+}
+
+.timeline-item {
+    position: relative;
+    display: block;
+}
+
+.timeline-marker {
+    position: absolute;
+    top: 0.4rem;
+    left: -2rem;
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    background-color: var(--accent);
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 2px var(--accent);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.timeline-content {
+    background-color: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.timeline-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-heading h3 {
+    font-family: "Space Grotesk", -apple-system, sans-serif;
+    font-size: 1.15rem;
+}
+
+.timeline-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.timeline-org {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent-dark);
+    margin-bottom: 0.6rem;
+}
+
+.timeline-details {
+    list-style: none;
+    display: grid;
+    gap: 0.4rem;
+}
+
+.timeline-details li {
+    position: relative;
+    padding-left: 1.1rem;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+}
+
+.timeline-details li::before {
+    content: "\2192";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+}
+
 .site-footer {
     padding: 1.5rem;
     color: var(--text-muted);
@@ -193,4 +303,5 @@ h1,
     .social-links {
         justify-content: flex-start;
     }
+
 }
