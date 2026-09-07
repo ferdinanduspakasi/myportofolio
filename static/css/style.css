@@ -271,6 +271,39 @@ h1,
     margin-bottom: 0.6rem;
 }
 
+.timeline-summary {
+    cursor: pointer;
+    list-style: none;
+    position: relative;
+    padding-right: 1.75rem;
+}
+
+.timeline-summary::-webkit-details-marker {
+    display: none;
+}
+
+.timeline-summary::after {
+    content: "";
+    position: absolute;
+    top: 0.4rem;
+    right: 0;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted);
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+}
+
+.timeline-content[open] > .timeline-summary::after {
+    transform: rotate(-135deg);
+    top: 0.55rem;
+}
+
+.timeline-content .timeline-details {
+    margin-top: 0.6rem;
+}
+
 .timeline-details {
     list-style: none;
     display: grid;
