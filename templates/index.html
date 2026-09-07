@@ -12,15 +12,21 @@
 </head>
 
 <body>
-    <header class="site-header">
-        <div class="container">
-            <a href="#profile" class="brand">Ferdinandus Pakasi</a>
-            <nav>
-                <a href="#profile">Profile</a>
-                <a href="#experience">Experience</a>
-            </nav>
-        </div>
-    </header>
+    <input type="checkbox" id="dark-mode-toggle" class="visually-hidden">
+
+    <div class="page">
+        <header class="site-header">
+            <div class="container">
+                <a href="#profile" class="brand">Ferdinandus Pakasi</a>
+                <nav>
+                    <a href="#profile">Profile</a>
+                    <a href="#experience">Experience</a>
+                    <label for="dark-mode-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                        <span class="theme-toggle-icon" aria-hidden="true"></span>
+                    </label>
+                </nav>
+            </div>
+        </header>
 
     <main>
         <section class="hero" id="profile">
@@ -129,11 +135,12 @@
         </section>
     </main>
 
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2026 Ferdinandus Pakasi. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
-        </div>
-    </footer>
+        <footer class="site-footer">
+            <div class="container">
+                <p>&copy; 2026 Ferdinandus Pakasi. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+            </div>
+        </footer>
+    </div>
 </body>
 
 </html>

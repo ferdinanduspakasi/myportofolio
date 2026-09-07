@@ -4,9 +4,11 @@
     box-sizing: border-box;
 }
 
+/* ===== Design tokens ===== */
 :root {
     --ink: #1c1917;
     --paper: #faf6f0;
+    --card: #ffffff;
     --accent: #d95d39;
     --accent-dark: #a8442a;
     --line: #e3d9c9;
@@ -32,6 +34,7 @@ h1,
     padding: 0 1.5rem;
 }
 
+/* ===== Header & nav ===== */
 .site-header {
     border-bottom: 1px solid var(--line);
 }
@@ -52,6 +55,7 @@ h1,
 
 .site-header nav {
     display: flex;
+    align-items: center;
     gap: 2rem;
 }
 
@@ -61,6 +65,7 @@ h1,
     font-size: 0.95rem;
 }
 
+/* ===== Hero / About Me ===== */
 .hero {
     padding: 4.5rem 0 5rem;
 }
@@ -170,6 +175,7 @@ h1,
     border: 3px solid var(--ink);
 }
 
+/* ===== Experience timeline ===== */
 .experience {
     padding: 4rem 0 5rem;
     border-top: 1px solid var(--line);
@@ -197,6 +203,7 @@ h1,
     padding-left: 2rem;
 }
 
+/* Vertical connecting line, drawn with a pseudo-element instead of a border */
 .timeline::before {
     content: "";
     position: absolute;
@@ -226,7 +233,7 @@ h1,
 }
 
 .timeline-content {
-    background-color: #fff;
+    background-color: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     padding: 1.25rem 1.5rem;
@@ -278,10 +285,12 @@ h1,
     padding-right: 1.75rem;
 }
 
+/* Hide the browser's default disclosure triangle so we can draw our own */
 .timeline-summary::-webkit-details-marker {
     display: none;
 }
 
+/* Custom chevron: a rotated corner border, flips 180° when <details> is open */
 .timeline-summary::after {
     content: "";
     position: absolute;
@@ -295,7 +304,7 @@ h1,
     transition: transform 0.2s ease;
 }
 
-.timeline-content[open] > .timeline-summary::after {
+.timeline-content[open]>.timeline-summary::after {
     transform: rotate(-135deg);
     top: 0.55rem;
 }
@@ -324,6 +333,69 @@ h1,
     color: var(--accent);
 }
 
+/* ===== Dark mode  =====
+   #dark-mode-toggle is a hidden checkbox placed just before .page in the
+   HTML. Checking it flips the CSS variables scoped to .page, which cascade
+   down to every element inside since they all read from these variables. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.page {
+    background-color: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    margin-left: 0.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.theme-toggle:hover {
+    border-color: var(--accent);
+}
+
+.theme-toggle-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    border-radius: 50%;
+    background-color: var(--ink);
+    box-shadow: inset -0.28rem 0.05rem 0 var(--paper);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Dark palette, only active while the hidden checkbox above is checked */
+#dark-mode-toggle:checked~.page {
+    --ink: #f2ede4;
+    --paper: #16130f;
+    --card: #221e1a;
+    --line: #3a332c;
+    --text-muted: #a89d8d;
+}
+
+#dark-mode-toggle:checked~.page .theme-toggle-icon {
+    background-color: #f2c94c;
+    box-shadow: none;
+}
+
 .site-footer {
     padding: 1.5rem;
     color: var(--text-muted);
@@ -331,6 +403,7 @@ h1,
     border-top: 1px solid var(--line);
 }
 
+/* ===== Mobile layout (< 600px) ===== */
 @media (max-width: 600px) {
     .hero-grid {
         grid-template-columns: 1fr;
