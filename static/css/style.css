@@ -176,7 +176,7 @@ h1,
 }
 
 /* ===== Experience timeline ===== */
-.experience {
+/* .experience {
     padding: 4rem 0 5rem;
     border-top: 1px solid var(--line);
 }
@@ -204,7 +204,7 @@ h1,
 }
 
 /* Vertical connecting line, drawn with a pseudo-element instead of a border */
-.timeline::before {
+/* .timeline::before {
     content: "";
     position: absolute;
     top: 0.4rem;
@@ -286,12 +286,12 @@ h1,
 }
 
 /* Hide the browser's default disclosure triangle so we can draw our own */
-.timeline-summary::-webkit-details-marker {
+/* .timeline-summary::-webkit-details-marker {
     display: none;
-}
+} */
 
 /* Custom chevron: a rotated corner border, flips 180° when <details> is open */
-.timeline-summary::after {
+/* .timeline-summary::after {
     content: "";
     position: absolute;
     top: 0.4rem;
@@ -331,7 +331,7 @@ h1,
     position: absolute;
     left: 0;
     color: var(--accent);
-}
+}   */
 
 /* ===== Dark mode  =====
    #dark-mode-toggle is a hidden checkbox placed just before .page in the
@@ -345,6 +345,7 @@ h1,
     margin: -1px;
     overflow: hidden;
     clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
     white-space: nowrap;
     border: 0;
 }
@@ -442,4 +443,58 @@ h1,
         align-items: flex-start;
         gap: 0.15rem;
     }
+}
+
+.experience-section {
+    padding: 4rem 0;
+    border-top: 1px solid var(--line);
+}
+
+.section-kicker {
+    color: var(--accent-dark);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.experience-section h1 {
+    margin: 0.4rem 0 1.5rem;
+    font-size: 2rem;
+}
+
+.experience-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.experience-card {
+    padding: 1.25rem;
+    background-color: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+.experience-category {
+    color: var(--accent-dark);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.experience-card h2 {
+    margin: 0.5rem 0;
+    font-size: 1.25rem;
+}
+
+.experience-description,
+.empty-state {
+    color: var(--text-muted);
+}
+
+.experience-status {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
 }

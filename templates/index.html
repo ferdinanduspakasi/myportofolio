@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ferdinandus Pakasi - Portfolio</title>
+    <title>{{ name }} - Portofolio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -17,10 +17,10 @@
     <div class="page">
         <header class="site-header">
             <div class="container">
-                <a href="#profile" class="brand">Ferdinandus Pakasi</a>
+                <a href="#profile" class="brand">{{ name }}</a>
                 <nav>
-                    <a href="#profile">Profile</a>
-                    <a href="#experience">Experience</a>
+                    <a href="{% url 'main:show_main' %}">Profile</a>
+                    <a href="{% url 'main:show_experience' %}">Experience</a>
                     <label for="dark-mode-toggle" class="theme-toggle" aria-label="Toggle dark mode">
                         <span class="theme-toggle-icon" aria-hidden="true"></span>
                     </label>
@@ -33,26 +33,23 @@
             <div class="container hero-grid">
                 <div class="hero-identity">
                     <p class="hero-kicker">Computer Science &middot; Universitas Indonesia</p>
-                    <h1>Ferdinandus Pakasi</h1>
+                    <h1>{{ name }}</h1>
                 </div>
                 <div class="hero-photo">
                     <div class="photo-block"></div>
-                    <img class="avatar" src="/static/img/photo.jpeg" alt="Photo of Ferdinandus Pakasi">
+                    <img class="avatar" src="/static/img/photo.jpeg" alt="Photo of {{ name }}">
                 </div>
                 <div class="hero-details">
-                    <p class="bio">Computer Science student with a strong passion for technology, science, and
-                        innovation.
-                        Enthusiastic about exploring the intersection of science and technology,
-                        particularly how the digital world can drive meaningful solutions for society.
+                    <p class="bio">{{ bio }}</p>
                     </p>
                     <dl class="meta-list">
                         <div class="meta-row">
                             <dt>NPM</dt>
-                            <dd>2506602643</dd>
+                            <dd>{{ npm }}</dd>
                         </div>
                         <div class="meta-row">
                             <dt>Program</dt>
-                            <dd>S1 Ilmu Komputer</dd>
+                            <dd>{{ study_program }}</dd>
                         </div>
                     </dl>
                     <div class="social-links">
@@ -63,84 +60,13 @@
                 </div>
             </div>
         </section>
-
-        <section class="experience" id="experience">
-            <div class="container">
-                <p class="section-kicker">Organizational &amp; Work Experience</p>
-                <h2 class="section-title">Experience</h2>
-
-                <div class="timeline">
-                    <article class="timeline-item">
-                        <div class="timeline-marker" aria-hidden="true"></div>
-                        <details class="timeline-content" open>
-                            <summary class="timeline-summary">
-                                <div class="timeline-heading">
-                                    <h3>Staff</h3>
-                                    <time class="timeline-date">Jan 2026 &ndash; Present</time>
-                                </div>
-                                <p class="timeline-org">Product Management Academy &middot; COMPFEST 18</p>
-                            </summary>
-                            <ul class="timeline-details">
-                                <li>Managed the mentee selection process and coordinated outreach to
-                                    prospective mentors and speakers, successfully securing participation
-                                    for the bootcamp.</li>
-                                <li>Coordinated the end-to-end execution of the bootcamp series as an MC
-                                    and event operator.</li>
-                            </ul>
-                        </details>
-                    </article>
-
-                    <article class="timeline-item">
-                        <div class="timeline-marker" aria-hidden="true"></div>
-                        <details class="timeline-content" open>
-                            <summary class="timeline-summary">
-                                <div class="timeline-heading">
-                                    <h3>Treasurer</h3>
-                                    <time class="timeline-date">Dec 2025 &ndash; Present</time>
-                                </div>
-                                <p class="timeline-org">Google Developer Group (GDG) on Campus &middot; Universitas
-                                    Indonesia</p>
-                            </summary>
-                            <ul class="timeline-details">
-                                <li>Manage GDGoC UI financial records, including budgeting, expense
-                                    tracking, and financial reporting.</li>
-                                <li>Assist in fundraising efforts, working closely with the Business
-                                    Development division to ensure proper financial management of each
-                                    business initiative.</li>
-                            </ul>
-                        </details>
-                    </article>
-
-                    <article class="timeline-item">
-                        <div class="timeline-marker" aria-hidden="true"></div>
-                        <details class="timeline-content" open>
-                            <summary class="timeline-summary">
-                                <div class="timeline-heading">
-                                    <h3>Treasurer</h3>
-                                    <time class="timeline-date">Jul 2023 &ndash; Apr 2024</time>
-                                </div>
-                                <p class="timeline-org">EASTLAB &middot; High School-Level Competition by SMA
-                                    Katolik Sang Timur Jakarta</p>
-                            </summary>
-                            <ul class="timeline-details">
-                                <li>Managed a total cash flow exceeding IDR 300M+ throughout the event
-                                    timeline.</li>
-                                <li>Collaborated with the fundraising team to draft financial schemes for
-                                    sponsorship proposals.</li>
-                            </ul>
-                        </details>
-                    </article>
-                </div>
-            </div>
-        </section>
     </main>
 
         <footer class="site-footer">
             <div class="container">
-                <p>&copy; 2026 Ferdinandus Pakasi. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+                <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
             </div>
         </footer>
     </div>
 </body>
-
 </html>
