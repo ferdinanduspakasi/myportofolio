@@ -27,10 +27,10 @@ PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://user-name-myportofolio.pws.cs.ui.ac.id",
+    "ferdinandus-pakasi-myportofolio.pws.cs.ui.ac.id",
 ]
 
-CSRF_COOKIE_SECURE    = True
+CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
 # Quick-start development settings - unsuitable for production
