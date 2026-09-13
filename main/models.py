@@ -33,16 +33,16 @@ class Experience(models.Model):
         return self.ended_at is None
 
     # Education
-    class Education(models.Model):
-        DEGREE_CHOICES = [
-            ('junior-high-school', 'Middle School'),
-            ('high-school', 'High School'),
-            ('diploma', 'Diploma'),
-            ('bachelor', "Bachelor's"),
-            ('master', "Master's"),
-            ('doctorate', 'Doctorate'),
-            ('certification', 'Certification'),
-        ]
+class Education(models.Model):
+    DEGREE_CHOICES = [
+        ('junior-high-school', 'Middle School'),
+        ('high-school', 'High School'),
+        ('diploma', 'Diploma'),
+        ('bachelor', "Bachelor's"),
+        ('master', "Master's"),
+        ('doctorate', 'Doctorate'),
+        ('certification', 'Certification'),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     institution_name = models.CharField(max_length=255)
