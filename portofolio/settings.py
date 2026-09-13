@@ -27,7 +27,7 @@ PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 CSRF_TRUSTED_ORIGINS = [
-    "ferdinandus-pakasi-myportofolio.pws.cs.ui.ac.id",
+    "https://ferdinandus-pakasi-myportofolio.pws.cs.ui.ac.id",
 ]
 
 CSRF_COOKIE_SECURE = True
