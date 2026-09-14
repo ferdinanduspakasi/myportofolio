@@ -31,8 +31,16 @@ def show_experience(request):
 
 
 def show_education(request):
+    selected_degree = request.GET.get("degree", "")
+
+    education_list = Education.objects.all()
+    if selected_degree:
+        education_list = education_list.filter(degree=selected_degree)
+
     context = {
         "name": "Ferdinandus Pakasi",
-        "education_list": Education.objects.all(),
+        "education_list": education_list,
+        "degree_choices": Education.DEGREE_CHOICES,
+        "selected_degree": selected_degree,
     }
     return render(request, "education.html", context)

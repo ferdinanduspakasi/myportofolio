@@ -35,6 +35,19 @@
                     <p class="section-kicker">Latar belakang pendidikan saya</p>
                     <h1>Education</h1>
 
+                    <form class="education-filter" method="get" action="{% url 'main:show_education' %}">
+                        <label for="degree-filter">Jenjang:</label>
+                        <select id="degree-filter" name="degree" onchange="this.form.submit()">
+                            <option value="" {% if not selected_degree %}selected{% endif %}>Semua Jenjang</option>
+                            {% for value, label in degree_choices %}
+                            <option value="{{ value }}" {% if selected_degree == value %}selected{% endif %}>
+                            {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <noscript><button type="submit">Terapkan</button></noscript>
+                    </form>
+
                     <div class="education-grid">
                         {% for education in education_list %}
                         <article class="education-card">
@@ -63,7 +76,11 @@
                         </article>
                         {% empty %}
                         <p class="empty-state">
+                            {% if selected_degree %}
+                            Belum ada riwayat pendidikan untuk jenjang ini.
+                            {% else %}
                             Belum ada riwayat pendidikan yang ditambahkan.
+                            {% endif %}
                         </p>
                         {% endfor %}
                     </div>
