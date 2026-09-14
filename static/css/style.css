@@ -313,7 +313,7 @@ h1,
 
 .experience-card {
     padding: 1.25rem;
-    background-color: #fff;
+    background-color: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius);
 }

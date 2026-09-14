@@ -33,6 +33,8 @@ class Experience(models.Model):
         return self.ended_at is None
 
     # Education
+
+
 class Education(models.Model):
     DEGREE_CHOICES = [
         ('junior-high-school', 'Middle School'),
@@ -49,6 +51,7 @@ class Education(models.Model):
     degree = models.CharField(
         max_length=20, choices=DEGREE_CHOICES, default='bachelor')
     field_of_study = models.CharField(max_length=255)
+    logo_url = models.URLField(blank=True, null=True)
     description = models.TextField(blank=True)
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(blank=True, null=True)
