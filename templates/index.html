@@ -21,6 +21,7 @@
                 <nav>
                     <a href="{% url 'main:show_main' %}">Profile</a>
                     <a href="{% url 'main:show_experience' %}">Experience</a>
+                    <a href="{% url 'main:show_education' %}">Education</a>
                     <label for="dark-mode-toggle" class="theme-toggle" aria-label="Toggle dark mode">
                         <span class="theme-toggle-icon" aria-hidden="true"></span>
                     </label>
@@ -28,39 +29,39 @@
             </div>
         </header>
 
-    <main>
-        <section class="hero" id="profile">
-            <div class="container hero-grid">
-                <div class="hero-identity">
-                    <p class="hero-kicker">Computer Science &middot; Universitas Indonesia</p>
-                    <h1>{{ name }}</h1>
-                </div>
-                <div class="hero-photo">
-                    <div class="photo-block"></div>
-                    <img class="avatar" src="/static/img/photo.jpeg" alt="Photo of {{ name }}">
-                </div>
-                <div class="hero-details">
-                    <p class="bio">{{ bio }}</p>
-                    </p>
-                    <dl class="meta-list">
-                        <div class="meta-row">
-                            <dt>NPM</dt>
-                            <dd>{{ npm }}</dd>
+        <main>
+            <section class="hero" id="profile">
+                <div class="container hero-grid">
+                    <div class="hero-identity">
+                        <p class="hero-kicker">Computer Science &middot; Universitas Indonesia</p>
+                        <h1>{{ name }}</h1>
+                    </div>
+                    <div class="hero-photo">
+                        <div class="photo-block"></div>
+                        <img class="avatar" src="/static/img/photo.jpeg" alt="Photo of {{ name }}">
+                    </div>
+                    <div class="hero-details">
+                        <p class="bio">{{ bio }}</p>
+                        </p>
+                        <dl class="meta-list">
+                            <div class="meta-row">
+                                <dt>NPM</dt>
+                                <dd>{{ npm }}</dd>
+                            </div>
+                            <div class="meta-row">
+                                <dt>Program</dt>
+                                <dd>{{ study_program }}</dd>
+                            </div>
+                        </dl>
+                        <div class="social-links">
+                            <a href="https://github.com/ferdinanduspakasi" class="social-link">GitHub</a>
+                            <a href="https://www.linkedin.com/in/ferdinanduspakasi/" class="social-link">LinkedIn</a>
+                            <a href="mailto:ferdinandpakasi07@gmail.com" class="social-link">Email</a>
                         </div>
-                        <div class="meta-row">
-                            <dt>Program</dt>
-                            <dd>{{ study_program }}</dd>
-                        </div>
-                    </dl>
-                    <div class="social-links">
-                        <a href="https://github.com/ferdinanduspakasi" class="social-link">GitHub</a>
-                        <a href="https://www.linkedin.com/in/ferdinanduspakasi/" class="social-link">LinkedIn</a>
-                        <a href="mailto:ferdinandpakasi07@gmail.com" class="social-link">Email</a>
                     </div>
                 </div>
-            </div>
-        </section>
-    </main>
+            </section>
+        </main>
 
         <footer class="site-footer">
             <div class="container">

@@ -313,7 +313,7 @@ h1,
 
 .experience-card {
     padding: 1.25rem;
-    background-color: #fff;
+    background-color: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius);
 }
@@ -339,4 +339,85 @@ h1,
     margin-top: 1rem;
     font-size: 0.85rem;
     font-weight: 600;
+}
+
+/* ===== Education ===== */
+.education-section {
+    padding: 4rem 0;
+    border-top: 1px solid var(--line);
+}
+
+.education-section h1 {
+    margin: 0.4rem 0 1.5rem;
+    font-size: 2rem;
+}
+
+.education-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.education-card {
+    padding: 1.25rem;
+    background-color: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+.education-degree {
+    color: var(--accent-dark);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.education-card h2 {
+    margin: 0.5rem 0;
+    font-size: 1.25rem;
+}
+
+.education-field,
+.education-description {
+    color: var(--text-muted);
+}
+
+.education-status {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.education-logo {
+    display: block;
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+    border-radius: var(--radius);
+}
+
+/* Education page Filter */
+
+.education-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+}
+
+.education-filter label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.education-filter select {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background-color: var(--card);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.9rem;
 }
