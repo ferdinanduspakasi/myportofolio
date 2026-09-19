@@ -32,8 +32,7 @@ class Experience(models.Model):
     def is_ongoing(self):
         return self.ended_at is None
 
-    # Education
-
+# Education
 
 class Education(models.Model):
     DEGREE_CHOICES = [

@@ -5,7 +5,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 
 from main.models import Experience, Education
-from main.forms import ExperienceForm
+from main.forms import ExperienceForm, EducationForm
+
+# profile
 
 
 def show_main(request):
@@ -22,6 +24,8 @@ def show_main(request):
         ),
     }
     return render(request, "index.html", context)
+
+# experience
 
 
 def show_experience(request):
@@ -40,22 +44,6 @@ def show_experience(request):
         "title_query": title_query,
     }
     return render(request, "experience.html", context)
-
-
-def show_education(request):
-    selected_degree = request.GET.get("degree", "")
-
-    education_list = Education.objects.all()
-    if selected_degree:
-        education_list = education_list.filter(degree=selected_degree)
-
-    context = {
-        "name": "Ferdinandus Pakasi",
-        "education_list": education_list,
-        "degree_choices": Education.DEGREE_CHOICES,
-        "selected_degree": selected_degree,
-    }
-    return render(request, "education.html", context)
 
 
 def create_experience(request):
@@ -93,3 +81,79 @@ def delete_experience(request, project_id):
         return redirect("main:show_experience")
 
     return redirect("main:show_experience")
+
+# education
+
+
+def show_education(request):
+    json_response = get_education_json(request)
+
+    education = serializers.deserialize(
+        "json",
+        json_response.content.decode("utf-8"),
+    )
+    education_list = [e.object for e in education]
+    selected_degree = request.GET.get("degree", "")
+
+    context = {
+        "name": "Ferdinandus Pakasi",
+        "education_list": education_list,
+        "degree_choices": Education.DEGREE_CHOICES,
+        "selected_degree": selected_degree,
+    }
+    return render(request, "education.html", context)
+
+def create_education(request):
+    form = EducationForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Riwayat pendidikan baru berhasil ditambahkan!")
+        return redirect("main:show_education")
+
+    context = {
+        "name": "Ferdinandus Pakasi",
+        "form": form,
+        "is_edit": False,
+    }
+    return render(request, "education_form.html", context)
+
+
+def update_education(request, education_id):
+    education = get_object_or_404(Education, pk=education_id)
+    form = EducationForm(request.POST or None, instance=education)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Riwayat pendidikan berhasil diperbarui!")
+        return redirect("main:show_education")
+
+    context = {
+        "name": "Ferdinandus Pakasi",
+        "form": form,
+        "is_edit": True,
+        "education": education,
+    }
+    return render(request, "education_form.html", context)
+
+
+def delete_education(request, education_id):
+    education = get_object_or_404(Education, pk=education_id)
+
+    if request.method == "POST":
+        education.delete()
+        messages.success(request, "Riwayat pendidikan berhasil dihapus!")
+        return redirect("main:show_education")
+
+    return redirect("main:show_education")
+
+
+def get_education_json(request):
+    selected_degree = request.GET.get("degree", "").strip()
+    education = Education.objects.all()
+
+    if selected_degree:
+        education = education.filter(degree=selected_degree)
+
+    education_json = serializers.serialize("json", education)
+    return HttpResponse(education_json, content_type="application/json")
