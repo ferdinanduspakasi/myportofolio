@@ -359,10 +359,16 @@ h1,
 }
 
 .education-card {
+    display: flex;
+    flex-direction: column;
     padding: 1.25rem;
     background-color: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius);
+}
+
+.education-card-actions {
+    margin-top: auto;
 }
 
 .education-degree {
