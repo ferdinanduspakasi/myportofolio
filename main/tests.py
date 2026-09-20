@@ -1,3 +1,5 @@
+import json
+
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -11,6 +13,7 @@ class MainTest(TestCase):
             title="Asisten Dosen PBP",
             description="Membantu mahasiswa memahami pengembangan web.",
             category="part-time",
+            started_at=timezone.now().date(),
         )
 
     def test_main_url_is_accessible(self):
@@ -107,3 +110,85 @@ class EducationTest(TestCase):
         self.assertFalse(self.education.is_ongoing)
         self.assertContains(response, "Selesai")
         self.assertNotContains(response, "Sedang berlangsung")
+
+    def test_get_education_json(self):
+        response = self.client.get(reverse("main:get_education_json"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/json")
+
+        data = json.loads(response.content)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(
+            data[0]["fields"]["institution_name"],
+            self.education.institution_name,
+        )
+
+    def test_get_education_json_filtered_by_degree(self):
+        response = self.client.get(
+            reverse("main:get_education_json"), {"degree": "bachelor"}
+        )
+        data = json.loads(response.content)
+
+        self.assertEqual(len(data), 0)
+
+    def test_create_education_form_page_is_accessible(self):
+        response = self.client.get(reverse("main:create_education"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "education_form.html")
+
+    def test_create_education_post_adds_new_entry(self):
+        response = self.client.post(
+            reverse("main:create_education"),
+            {
+                "institution_name": "Universitas Indonesia",
+                "degree": "bachelor",
+                "field_of_study": "Ilmu Komputer",
+                "logo_url": "",
+                "description": "Program studi S1 Ilmu Komputer.",
+                "ended_at": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("main:show_education"))
+        self.assertEqual(Education.objects.count(), 2)
+        self.assertTrue(
+            Education.objects.filter(
+                institution_name="Universitas Indonesia").exists()
+        )
+
+    def test_update_education_form_prefilled_and_saves_changes(self):
+        response = self.client.get(
+            reverse("main:update_education", args=[self.education.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "education_form.html")
+        self.assertContains(response, self.education.institution_name)
+
+        response = self.client.post(
+            reverse("main:update_education", args=[self.education.id]),
+            {
+                "institution_name": "SMA Negeri 1 Contoh (Updated)",
+                "degree": "high-school",
+                "field_of_study": "IPA",
+                "logo_url": "",
+                "description": "Deskripsi yang diperbarui.",
+                "ended_at": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("main:show_education"))
+        self.education.refresh_from_db()
+        self.assertEqual(
+            self.education.institution_name, "SMA Negeri 1 Contoh (Updated)"
+        )
+
+    def test_delete_education_removes_entry(self):
+        response = self.client.post(
+            reverse("main:delete_education", args=[self.education.id])
+        )
+
+        self.assertRedirects(response, reverse("main:show_education"))
+        self.assertFalse(
+            Education.objects.filter(pk=self.education.id).exists())
