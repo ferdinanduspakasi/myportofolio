@@ -7,7 +7,13 @@
     <section class="education-section" id="education">
         <div class="container">
             <p class="section-kicker">Latar belakang pendidikan saya</p>
-            <h1>Education</h1>
+            <div class="experience-header">
+                <h1>Education</h1>
+                <a href="{% url 'main:create_education' %}" class="button experience-add-button">
+                    <span aria-hidden="true">+</span>
+                    Tambah Pendidikan
+                </a>
+            </div>
 
             <form class="education-filter" method="get" action="{% url 'main:show_education' %}">
                 <label for="degree-filter">Jenjang:</label>
@@ -47,6 +53,13 @@
                     {% else %}
                     <p class="education-status">Selesai</p>
                     {% endif %}
+
+                    <div class="education-card-actions experience-card-actions">
+                        <div class="experience-actions">
+                            <a href="{% url 'main:update_education' education.id %}" class="button">Edit</a>
+                            {% include "components/education_delete_modal.html" with education=education %}
+                        </div>
+                    </div>
                 </article>
                 {% empty %}
                 <p class="empty-state">
