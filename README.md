@@ -13,6 +13,10 @@ Kelas : PBP-D
   diimplementasikan dengan pola Model-View-Template Django. Dalam section ini juga terdapat
   fitur filtering berdasarkan jenjang pendidikan, dengan menerapkan method get dan fitur
   form pada HTML5.
+- **Form & Data Delivery** lengkap: tambah data lewat `EducationForm` (ModelForm), ubah data
+  lewat form yang sama (prefilled dari data existing), hapus data lewat tombol berkonfirmasi,
+  dan penyajian datanya dalam format **JSON** (`/api/education/`) yang kemudian
+  dideserialisasi sebelum ditampilkan ke halaman web.
 
 ## Cara Menjalankan Proyek 
 
@@ -54,6 +58,20 @@ Lalu buka `http://127.0.0.1:8000/` di browser.
   template baru `education.html`, named route `main:show_education` pada `main/urls.py`,
   tautan navbar baru menggunakan `{% url %}`, penanganan kondisi data kosong, serta unit
   test untuk aksesibilitas URL/template, tampilnya data, dan tampilan kondisi kosong.
+- **Tutorial 3** — Menerapkan form & data delivery pada bagian Experience: `ExperienceForm`
+  (ModelForm) di `main/forms.py`, fungsi view `create_experience` dan `delete_experience`,
+  serta `get_experience_json` yang mengembalikan queryset `Experience` dalam format JSON
+  menggunakan `django.core.serializers`. Halaman `show_experience` kemudian mengambil data
+  lewat fungsi JSON tersebut dan melakukan deserialisasi sebelum dirender ke template.
+- **Tugas 3** — Menerapkan mekanisme Form & Data Delivery yang sama pada bagian
+  **Education**
+  - **Extre feature**: Sebelumnya toggle dark/light mode di navbar murni
+    CSS (`#dark-mode-toggle`) sehingga selalu kembali ke light mode setiap halaman
+    direfresh atau pindah halaman. Ditambahkan script  di `base.html`
+    yang menyimpan pilihan tema ke `localStorage` (client-side, per browser) setiap kali
+    toggle diklik, lalu membaca kembali nilai tersebut sebelum render pertama halaman
+    berikutnya sehingga tidak terjadi flash light-mode sesaat maupun kembali ke light
+    mode saat refresh/navigasi. 
 
 ### Refleksi Tugas 1
 
@@ -124,6 +142,55 @@ Lalu buka `http://127.0.0.1:8000/` di browser.
    `python manage.py migrate` agar Django benar-benar membuat tabel `Education` itu di
    database `db.sqlite3` sehingga aplikasi bisa menyimpan dan membaca datanya.
 
+   ### Refleksi Tugas 3
+
+1. `ModelForm` dipakai alih-alih membuat form HTML manual karena `ModelForm` menurunkan
+   field form-nya langsung dari definisi model (`Education`, `Experience`), sehingga tipe
+   input, validasi (misalnya `max_length`, `choices`, apakah field boleh kosong), serta
+   proses penyimpanan (`form.save()`) sudah otomatis konsisten dengan skema database tanpa
+   perlu ditulis ulang secara manual. Kalau formnya ditulis manual di HTML, saya harus
+   memvalidasi setiap input sendiri di view, menjaga field-nya tetap sinkron setiap kali
+   model berubah, dan rawan lolos data yang tidak valid ke database. `ModelForm` juga
+   otomatis menyediakan pesan error per field (`field.errors`) yang tinggal ditampilkan di
+   template. Adapun `{% csrf_token %}` wajib ditambahkan pada setiap form `method="post"`
+   karena Django menerapkan proteksi CSRF (Cross-Site Request Forgery) secara default: tanpa
+   token ini, request `POST` akan ditolak (403 Forbidden), karena token tersebut membuktikan
+   bahwa request memang berasal dari form yang di-render oleh server itu sendiri, bukan dari
+   situs lain yang mencoba mengirim request atas nama pengguna yang sedang login tanpa
+   sepengetahuannya.
+
+2. JSON lebih disukai dibanding XML pada pengembangan web modern karena beberapa alasan.
+   Pertama, JSON strukturnya jauh lebih ringkas — tidak ada closing tag berulang seperti
+   pada XML — sehingga ukuran payload-nya lebih kecil dan lebih hemat bandwidth, terutama
+   untuk API yang dipanggil berkali-kali. Kedua, JSON adalah representasi native dari objek
+   JavaScript, sehingga di sisi client (browser) data JSON bisa langsung di-parse menjadi
+   objek/array JavaScript dengan `JSON.parse()` tanpa perlu library tambahan, sedangkan XML
+   butuh parser DOM/XML yang lebih rumit untuk diakses. Ketiga, hampir seluruh bahasa dan
+   framework modern (termasuk Django lewat `django.core.serializers`) sudah punya dukungan
+   serialisasi/deserialisasi JSON bawaan, sehingga proses encode-decode antara backend dan
+   frontend jadi jauh lebih sederhana. XML masih dipakai di beberapa domain lama (misalnya
+   dokumen enterprise/SOAP) karena dukungan skema dan namespace-nya lebih ketat, tapi untuk
+   kebutuhan pertukaran data web pada umumnya JSON jauh lebih efisien dan mudah digunakan.
+
+3. Ketika fungsi view seperti `get_education_json` dipanggil, alurnya dimulai dari
+   `Education.objects.all()` (atau versi ter-filter-nya) yang mengambil queryset objek
+   `Education` dari database lewat Django ORM. Objek-objek model ini pada dasarnya adalah
+   instance Python (bertipe `Education`) yang tidak bisa langsung dikirim sebagai response
+   HTTP karena HTTP hanya bisa mengirim data dalam bentuk teks/bytes, bukan objek Python.
+   Di sinilah proses **serialization** diperlukan: `serializers.serialize("json", education)`
+   mengubah setiap objek model beserta field-fieldnya menjadi struktur data sederhana
+   (dictionary/list) yang kemudian di-encode menjadi string JSON. String JSON inilah yang
+   dibungkus dalam `HttpResponse` dengan `content_type="application/json"` dan dikirim ke
+   client. Pada `show_education`, string JSON tersebut diambil kembali lalu diproses dengan
+   `serializers.deserialize("json", ...)` untuk mengubahnya kembali menjadi objek Python
+   (proses **deserialization**), sehingga atribut-atributnya (`institution_name`,
+   `get_degree_display`, `is_ongoing`, dll.) bisa dipakai kembali secara normal di dalam
+   template Django. Proses serialization-deserialization ini penting karena memisahkan
+   representasi data untuk pertukaran (JSON, bisa dipakai API/frontend lain) dari
+   representasi objek model yang dipakai secara internal oleh Django, sekaligus memastikan
+   data yang dikirim lewat jaringan berbentuk teks yang aman dan dapat dibaca oleh berbagai
+   platform, tidak bergantung pada implementasi Python/Django secara spesifik.
+
 
 ## AI Disclosure
 
@@ -163,4 +230,22 @@ juga jadi efektif untuk belajar dengan aktif bertanya dan mengklarifikasi hal-ha
 Keterbatasan yang saya temukan: Saya menemukan bahwa jika thread percakapan sudah terlalu panjang, 
 AI sering amnesia dengan requirements yang sudah ditetapkan di awal, sehingga konteks dan requirements
 harus diberikan kembali.
+
+**Tugas 3** - Saya menggunakan Claude (Anthropic, via claude.ai) untuk membantu pengerjaan Tugas 3 ini.
+Bagian yang dibantu AI:
+Chat Link: https://claude.ai/share/46b6a9d1-632c-48ea-a130-8dadf2c59b46 
+
+- Menulis `EducationForm` di `forms.py`, menambahkan beberapa fungsi di `views.py`, dan merefactor
+  `show_education` agar mengambil data lewat JSON, mengikuti pola pada section yang sudah ada.
+- Menulis template `education_form.html` dan `components/education_delete_modal.html`,
+  serta memperbarui `education.html` (tombol tambah, edit, dan hapus per kartu).
+- Menambahkan unit test baru untuk memverifikasi CRUD dan JSON delivery pada Education, serta
+  memperbaiki satu bug pre-existing pada test Experience (field `started_at` yang wajib diisi).
+
+Strategi prompting: Saya mengunggah berkas instruksi tugas (PDF) beserta seluruh source code
+proyek yang sudah ada, sehingga AI bisa memahami pola dan gaya kode yang sudah dipakai sebelum
+menambahkan fitur baru. 
+
+Keterbatasan yang saya temukan: Sering overdo lebih dari perintah, sehingga outputnya perlu
+dikurasi secara manual.
 
