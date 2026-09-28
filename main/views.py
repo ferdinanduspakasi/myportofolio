@@ -27,6 +27,7 @@ def is_editor(user):
 
 # return user role for role badge in navbar
 
+
 def user_role(request):
     user = request.user
     if not user.is_authenticated:
@@ -109,11 +110,11 @@ def get_experience_json(request):
 
 
 @login_required(login_url="/login/")
-def delete_experience(request, experiencet_id):
+def delete_experience(request, experience_id):
     if not request.user.is_superuser:
         raise PermissionDenied
 
-    experience = get_object_or_404(Experience, pk=experiencet_id)
+    experience = get_object_or_404(Experience, pk=experience_id)
 
     if request.method == "POST":
         experience.delete()
@@ -124,8 +125,8 @@ def delete_experience(request, experiencet_id):
 
 
 @login_required(login_url="/login/")
-def toggle_star(request, experiencet_id):
-    experience = get_object_or_404(Experience, pk=experiencet_id)
+def toggle_star(request, experience_id):
+    experience = get_object_or_404(Experience, pk=experience_id)
 
     if request.method == "POST":
         # Kalau akun ini sudah pernah memberi star, batalkan star-nya.
