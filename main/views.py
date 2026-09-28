@@ -28,6 +28,7 @@ def is_editor(user):
 
 # profile
 
+
 def show_main(request):
     last_login = request.COOKIES.get(
         'last_login', 'Belum ada sesi login / Cookie tidak ditemukan')
@@ -130,6 +131,7 @@ def toggle_star(request, project_id):
 
 # education
 
+
 def show_education(request):
     json_response = get_education_json(request)
 
@@ -145,11 +147,17 @@ def show_education(request):
         "education_list": education_list,
         "degree_choices": Education.DEGREE_CHOICES,
         "selected_degree": selected_degree,
+        # Dipakai template untuk menampilkan tombol Edit bagi Editor.
+        "is_editor": is_editor(request.user),
     }
     return render(request, "education.html", context)
 
 
+@login_required(login_url="/login/")
 def create_education(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     form = EducationForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -166,7 +174,12 @@ def create_education(request):
     return render(request, "education_form.html", context)
 
 
+@login_required(login_url="/login/")
 def update_education(request, education_id):
+    # Berbeda dari create/delete: Editor juga boleh mengubah data.
+    if not (request.user.is_superuser or is_editor(request.user)):
+        raise PermissionDenied
+
     education = get_object_or_404(Education, pk=education_id)
     form = EducationForm(request.POST or None, instance=education)
 
@@ -184,7 +197,11 @@ def update_education(request, education_id):
     return render(request, "education_form.html", context)
 
 
+@login_required(login_url="/login/")
 def delete_education(request, education_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     education = get_object_or_404(Education, pk=education_id)
 
     if request.method == "POST":
@@ -200,9 +217,15 @@ def get_education_json(request):
     education = Education.objects.all()
 
     if selected_degree:
-        education = education.filter(degree=selected_degree)
+        education = Education.objects.filter(degree=selected_degree)
 
-    education_json = serializers.serialize("json", education)
+    # concrete_fields tidak memuat ManyToMany, sehingga `starred_by` (ID akun
+    # pengguna) tidak ikut terekspos di endpoint publik ini.
+    education_json = serializers.serialize("json", education,
+                                           fields=[
+                                               f.name for f in Education._meta.concrete_fields],
+                                           use_natural_foreign_keys=True,
+                                           )
     return HttpResponse(education_json, content_type="application/json")
 
 
