@@ -25,6 +25,15 @@ def is_editor(user):
     """True jika user tergabung di Django Group 'Editor' (diatur lewat /admin)."""
     return user.is_authenticated and user.groups.filter(name=EDITOR_GROUP).exists()
 
+# return user role for role badge in navbar
+
+def user_role(request):
+    user = request.user
+    if not user.is_authenticated:
+        return {}
+    if user.is_superuser:
+        return {"user_role": "owner"}
+    return {"user_role": "editor" if is_editor(user) else "user"}
 
 # profile
 

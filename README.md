@@ -32,9 +32,19 @@ source env/bin/activate      # Windows: env\Scripts\activate
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Jalankan development server
+# 4. Terapkan migrasi database
+python manage.py migrate
+
+# 5. (Tugas 4) Buat akun pemilik portofolio (superuser)
+python manage.py createsuperuser
+
+# 6. Jalankan development server
 python manage.py runserver
 ```
+
+**Menyiapkan peran Editor (Tugas 4):** login ke `/admin`, buka *Groups* → *Add group*,
+buat grup bernama tepat `Editor` (tanpa permission tambahan; pengecekan dilakukan di view),
+lalu masukkan akun tertentu ke grup tersebut lewat *Users*.
 
 Lalu buka `http://127.0.0.1:8000/` di browser.
 
