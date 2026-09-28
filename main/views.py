@@ -109,11 +109,11 @@ def get_experience_json(request):
 
 
 @login_required(login_url="/login/")
-def delete_experience(request, project_id):
+def delete_experience(request, experiencet_id):
     if not request.user.is_superuser:
         raise PermissionDenied
 
-    experience = get_object_or_404(Experience, pk=project_id)
+    experience = get_object_or_404(Experience, pk=experiencet_id)
 
     if request.method == "POST":
         experience.delete()
@@ -124,8 +124,8 @@ def delete_experience(request, project_id):
 
 
 @login_required(login_url="/login/")
-def toggle_star(request, project_id):
-    experience = get_object_or_404(Experience, pk=project_id)
+def toggle_star(request, experiencet_id):
+    experience = get_object_or_404(Experience, pk=experiencet_id)
 
     if request.method == "POST":
         # Kalau akun ini sudah pernah memberi star, batalkan star-nya.
