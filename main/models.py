@@ -55,6 +55,7 @@ class Education(models.Model):
     description = models.TextField(blank=True)
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(blank=True, null=True)
+    starred_by = models.ManyToManyField(User, related_name="starred_education", blank=True)
 
     class Meta:
         ordering = ['-started_at']
