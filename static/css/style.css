@@ -725,3 +725,31 @@ h1,
     background: rgba(255, 255, 255, 0.25);
     font-size: 0.8rem;
 }
+
+/* role badge (navbar) */
+
+.role-badge {
+    display: inline-block;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    line-height: 1.4;
+    border: 1px solid transparent;
+}
+
+.role-badge--owner {
+    background: var(--accent-dark);
+    color: #fff;
+}
+
+.role-badge--editor {
+    background: var(--ink);
+    color: var(--paper);
+}
+
+.role-badge--user {
+    border-color: var(--line);
+    color: var(--text-muted);
+}
