@@ -16,8 +16,15 @@ import datetime
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 
-# profile
+# helper function for editor requirements
 
+EDITOR_GROUP = "Editor"
+def is_editor(user):
+    """True jika user tergabung di Django Group 'Editor' (diatur lewat /admin)."""
+    return user.is_authenticated and user.groups.filter(name=EDITOR_GROUP).exists()
+
+
+# profile
 
 def show_main(request):
     last_login = request.COOKIES.get(
