@@ -19,6 +19,8 @@ from django.core.exceptions import PermissionDenied
 # helper function for editor requirements
 
 EDITOR_GROUP = "Editor"
+
+
 def is_editor(user):
     """True jika user tergabung di Django Group 'Editor' (diatur lewat /admin)."""
     return user.is_authenticated and user.groups.filter(name=EDITOR_GROUP).exists()
@@ -91,7 +93,8 @@ def get_experience_json(request):
     if title_query:
         experience = Experience.objects.filter(title__icontains=title_query)
 
-    experience_json = serializers.serialize("json", experience, use_natural_foreign_keys=True)
+    experience_json = serializers.serialize(
+        "json", experience, use_natural_foreign_keys=True)
     return HttpResponse(experience_json, content_type="application/json")
 
 
@@ -201,6 +204,21 @@ def get_education_json(request):
 
     education_json = serializers.serialize("json", education)
     return HttpResponse(education_json, content_type="application/json")
+
+
+@login_required(login_url="/login/")
+def toggle_education_star(request, education_id):
+    education = get_object_or_404(Education, pk=education_id)
+
+    if request.method == "POST":
+        # Kalau akun ini sudah pernah memberi star, batalkan star-nya.
+        # Kalau belum, tambahkan star.
+        if request.user in education.starred_by.all():
+            education.starred_by.remove(request.user)
+        else:
+            education.starred_by.add(request.user)
+
+    return redirect("main:show_education")
 
 # authentication
 
