@@ -818,12 +818,6 @@ h1,
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.25);
     font-size: 0.8rem;
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-}
-=======
-=======
->>>>>>> origin/main
 }
 
 /* role badge (navbar) */
@@ -852,7 +846,6 @@ h1,
 .role-badge--user {
     border-color: var(--line);
     color: var(--text-muted);
-<<<<<<< HEAD
 }
 
 /* toast */
@@ -903,7 +896,3 @@ h1,
 .toast-success { border-left: 4px solid #22c55e; }
 .toast-error { border-left: 4px solid #b42318; }
 .toast-normal { border-left: 4px solid var(--accent); }
->>>>>>> Stashed changes
-=======
-}
->>>>>>> origin/main

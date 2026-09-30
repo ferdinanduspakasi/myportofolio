@@ -98,15 +98,6 @@ def get_experience_json(request):
     if title_query:
         experience_list = experience_list.filter(title__icontains=title_query)
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-    experience_json = serializers.serialize("json", experience, use_natural_foreign_keys=True)
-=======
-    experience_json = serializers.serialize(
-        "json", experience, use_natural_foreign_keys=True)
->>>>>>> origin/main
-    return HttpResponse(experience_json, content_type="application/json")
-=======
     # Konstruksi data JSON secara manual agar bisa menyisipkan logika Star
     data = []
     for experience in experience_list:
@@ -149,7 +140,6 @@ def create_experience_ajax(request):
         )
 
     return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
->>>>>>> Stashed changes
 
 
 @login_required(login_url="/login/")

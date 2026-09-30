@@ -213,11 +213,6 @@ class EducationTest(TestCase):
         self.assertRedirects(response, reverse("main:show_education"))
         self.assertFalse(
             Education.objects.filter(pk=self.education.id).exists())
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> origin/main
 
 
 class EducationAuthorizationTest(TestCase):
@@ -403,7 +398,6 @@ class RoleBadgeTest(TestCase):
         for name in ("main:show_experience", "main:show_education"):
             self.assertContains(self.badge(
                 self.editor, name), "role-badge--editor")
-<<<<<<< HEAD
 
 
 class ExperienceAjaxTest(TestCase):
@@ -468,6 +462,3 @@ class ExperienceAjaxTest(TestCase):
         self.assertTrue(f["is_starred"])
         self.assertEqual(f["star_count"], 1)
         self.assertEqual(f["starred_by_names"], "biasa")
->>>>>>> Stashed changes
-=======
->>>>>>> origin/main
