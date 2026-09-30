@@ -17,6 +17,22 @@ Kelas : PBP-D
   lewat form yang sama (prefilled dari data existing), hapus data lewat tombol berkonfirmasi,
   dan penyajian datanya dalam format **JSON** (`/api/education/`) yang kemudian
   dideserialisasi sebelum ditampilkan ke halaman web.
+- **Autentikasi & Session** — registrasi (`UserCreationForm`), login (`AuthenticationForm`), dan
+  logout menggunakan sistem autentikasi bawaan Django. Cookie `last_login` di-set saat login,
+  dihapus saat logout, dan ditampilkan di halaman utama. Halaman daftar dan detail tetap bisa
+  dibaca siapa pun tanpa login.
+- **Manajemen Peran (Authorization)** — empat peran dengan pengecekan di sisi server: pengunjung
+  tanpa login (baca saja, diarahkan ke halaman login untuk aksi yang butuh akun), pengguna biasa
+  (baca + star), **Editor** (hak pengguna biasa + ubah data, tanpa membuat/menghapus), dan
+  pemilik portofolio/superuser (semua hak). Peran Editor diatur lewat Django Group di `/admin`.
+  Aksi yang tidak diizinkan mengembalikan HTTP 403, dan tombol create/edit/delete
+  disembunyikan di template bagi pengguna yang tidak berhak.
+- **Star** — pengguna yang sudah login bisa memberi atau membatalkan star pada Experience dan
+  Education lewat relasi `ManyToManyField` ke `User` (maksimal satu star per pengguna), dengan
+  jumlah total star dan status star pengguna yang ditampilkan di tiap kartu. Aksi star hanya
+  menerima `POST` beserta `{% csrf_token %}`.
+- **Role badge di navbar** *(extra feature)* — badge kecil di navbar yang menunjukkan peran akun
+  yang sedang login (Owner / Editor / User).
 
 ## Cara Menjalankan Proyek 
 
@@ -32,9 +48,19 @@ source env/bin/activate      # Windows: env\Scripts\activate
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Jalankan development server
+# 4. Terapkan migrasi database
+python manage.py migrate
+
+# 5. (Tugas 4) Buat akun pemilik portofolio (superuser)
+python manage.py createsuperuser
+
+# 6. Jalankan development server
 python manage.py runserver
 ```
+
+**Menyiapkan peran Editor (Tugas 4):** login ke `/admin`, buka *Groups* → *Add group*,
+buat grup bernama tepat `Editor` (tanpa permission tambahan; pengecekan dilakukan di view),
+lalu masukkan akun tertentu ke grup tersebut lewat *Users*.
 
 Lalu buka `http://127.0.0.1:8000/` di browser.
 
@@ -49,6 +75,7 @@ Lalu buka `http://127.0.0.1:8000/` di browser.
 - **Tugas 1** — Menambahkan section Experience (timeline dengan 3 entri pengalaman
   organisasi), styling grid/flexbox khusus, efek hover, layout responsif, fitur expand/collapse
   per entri, dan dark/light mode toggle sebagai fitur tambahan di luar instruksi minggu ini.
+
 - **Tutorial 2** — Menerapkan pola MVT Django untuk bagian Experience: model `Experience`,
   view `show_experience`, dan template `experience.html` yang menampilkan data dari
   database, menggantikan data yang sebelumnya di-hardcode di HTML.
@@ -58,6 +85,7 @@ Lalu buka `http://127.0.0.1:8000/` di browser.
   template baru `education.html`, named route `main:show_education` pada `main/urls.py`,
   tautan navbar baru menggunakan `{% url %}`, penanganan kondisi data kosong, serta unit
   test untuk aksesibilitas URL/template, tampilnya data, dan tampilan kondisi kosong.
+
 - **Tutorial 3** — Menerapkan form & data delivery pada bagian Experience: `ExperienceForm`
   (ModelForm) di `main/forms.py`, fungsi view `create_experience` dan `delete_experience`,
   serta `get_experience_json` yang mengembalikan queryset `Experience` dalam format JSON
@@ -72,6 +100,20 @@ Lalu buka `http://127.0.0.1:8000/` di browser.
     toggle diklik, lalu membaca kembali nilai tersebut sebelum render pertama halaman
     berikutnya sehingga tidak terjadi flash light-mode sesaat maupun kembali ke light
     mode saat refresh/navigasi. 
+
+- **Tutorial 4** — Menerapkan autentikasi bawaan Django: view `register`, `login_user`, dan
+  `logout_user`, cookie `last_login` yang di-set saat login dan dihapus saat logout, serta status
+  login di navbar. Pada Experience, create dan delete dibatasi untuk superuser, sedangkan star
+  dibuka untuk pengguna yang sudah login lewat field `starred_by` (`ManyToManyField` ke `User`).
+- **Tugas 4** — Menerapkan pola otorisasi yang sama pada **Education**: field `starred_by` beserta
+  migrasinya, view `toggle_education_star`, dan peran **Editor** lewat Django Group dengan helper
+  `is_editor()` (Editor boleh mengubah data, sedangkan create dan delete tetap khusus superuser).
+  Tombol aksi pada template disembunyikan sesuai peran, `/api/education/` tidak lagi mengekspos
+  `starred_by`, dan ditambahkan unit test `EducationAuthorizationTest`.
+  - **Extra feature**: Role badge di navbar. Sebelumnya tidak ada penanda peran akun yang sedang
+    login. Ditambahkan context processor `user_role` (`owner`, `editor`, atau `user`) sehingga
+    `base.html` dapat menampilkan badge di semua halaman tanpa mengirim variabel dari tiap view,
+    lengkap dengan `RoleBadgeTest`.
 
 ### Refleksi Tugas 1
 
@@ -212,8 +254,8 @@ pembelajaran, sehingga peran untuk mengambil keputusan sesuai scope pembelajaran
 
 
 **Tugas 2** - Saya menggunakan Claude (Anthropic, via claude.ai) untuk membantu pengerjaan Tugas 1 ini.
-Bagian yang dibantu AI:
 Chat Link: https://claude.ai/share/91077e93-745d-4a0d-8959-168170083a8a 
+Bagian yang dibantu AI:
 
 - Membantu menjelaskan alur pengerjaan dan spek yang diharapkan instruksi tugas 2.
 - Membantu menjelaskan proses penggunaan git (branching, dsb).
@@ -232,8 +274,8 @@ AI sering amnesia dengan requirements yang sudah ditetapkan di awal, sehingga ko
 harus diberikan kembali.
 
 **Tugas 3** - Saya menggunakan Claude (Anthropic, via claude.ai) untuk membantu pengerjaan Tugas 3 ini.
-Bagian yang dibantu AI:
 Chat Link: https://claude.ai/share/46b6a9d1-632c-48ea-a130-8dadf2c59b46 
+Bagian yang dibantu AI:
 
 - Menulis `EducationForm` di `forms.py`, menambahkan beberapa fungsi di `views.py`, dan merefactor
   `show_education` agar mengambil data lewat JSON, mengikuti pola pada section yang sudah ada.
@@ -249,3 +291,19 @@ menambahkan fitur baru.
 Keterbatasan yang saya temukan: Sering overdo lebih dari perintah, sehingga outputnya perlu
 dikurasi secara manual.
 
+**Tugas 4** - Saya menggunakan Claude (Anthropic, via claude.ai) untuk membantu pengerjaan Tugas 4 ini.
+Chat Link: https://claude.ai/share/07ac8a24-2886-4392-916d-1de320653bcf
+Bagian yang dibantu AI:
+
+- Menulis sebagian besar kode autentikasi, helper `is_editor()`, view star, dan pembatasan hak
+  akses pada view CRUD, beserta template dan migrasinya.
+- Menulis `EducationAuthorizationTest`, `RoleBadgeTest`, serta context processor dan CSS role badge.
+
+Strategi prompting: Strateginya yakni memastikan kode yang digenerate sudah sesuai, bebas bug, dan
+dengan pendekatan yang tepat. Saya juga aktif bertanya untuk memastikan pemahaman sudah baik, 
+contohnya mengenai mekanisme penentuan Editor lalu memeriksa kode yang dihasilkan dan mengujinya 
+langsung di browser dengan akun berbeda untuk tiap peran sebelum melakukan commit.
+
+Keterbatasan yang saya temukan: AI mendorong pada pendekatan yang singkat dan modular. Walaupun
+memang terlihat ringkas dan rapih, tapi di satu sisi mengurangi readability dan kurang baik
+sebagai contoh untuk bahan pemebelajaran.

@@ -17,6 +17,26 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
 
+# helper function for editor requirements
+
+EDITOR_GROUP = "Editor"
+
+
+def is_editor(user):
+    """True jika user tergabung di Django Group 'Editor' (diatur lewat /admin)."""
+    return user.is_authenticated and user.groups.filter(name=EDITOR_GROUP).exists()
+
+# return user role for role badge in navbar
+
+
+def user_role(request):
+    user = request.user
+    if not user.is_authenticated:
+        return {}
+    if user.is_superuser:
+        return {"user_role": "owner"}
+    return {"user_role": "editor" if is_editor(user) else "user"}
+
 # profile
 
 
@@ -78,8 +98,13 @@ def get_experience_json(request):
     if title_query:
         experience_list = experience_list.filter(title__icontains=title_query)
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
     experience_json = serializers.serialize("json", experience, use_natural_foreign_keys=True)
+=======
+    experience_json = serializers.serialize(
+        "json", experience, use_natural_foreign_keys=True)
+>>>>>>> origin/main
     return HttpResponse(experience_json, content_type="application/json")
 =======
     # Konstruksi data JSON secara manual agar bisa menyisipkan logika Star
@@ -128,11 +153,11 @@ def create_experience_ajax(request):
 
 
 @login_required(login_url="/login/")
-def delete_experience(request, project_id):
+def delete_experience(request, experience_id):
     if not request.user.is_superuser:
         raise PermissionDenied
 
-    experience = get_object_or_404(Experience, pk=project_id)
+    experience = get_object_or_404(Experience, pk=experience_id)
 
     if request.method == "POST":
         experience.delete()
@@ -143,8 +168,8 @@ def delete_experience(request, project_id):
 
 
 @login_required(login_url="/login/")
-def toggle_star(request, project_id):
-    experience = get_object_or_404(Experience, pk=project_id)
+def toggle_star(request, experience_id):
+    experience = get_object_or_404(Experience, pk=experience_id)
 
     if request.method == "POST":
         # Kalau akun ini sudah pernah memberi star, batalkan star-nya.
@@ -158,6 +183,7 @@ def toggle_star(request, project_id):
 
 
 # education
+
 
 def show_education(request):
     json_response = get_education_json(request)
@@ -174,11 +200,17 @@ def show_education(request):
         "education_list": education_list,
         "degree_choices": Education.DEGREE_CHOICES,
         "selected_degree": selected_degree,
+        # Dipakai template untuk menampilkan tombol Edit bagi Editor.
+        "is_editor": is_editor(request.user),
     }
     return render(request, "education.html", context)
 
 
+@login_required(login_url="/login/")
 def create_education(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     form = EducationForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -195,7 +227,12 @@ def create_education(request):
     return render(request, "education_form.html", context)
 
 
+@login_required(login_url="/login/")
 def update_education(request, education_id):
+    # Berbeda dari create/delete: Editor juga boleh mengubah data.
+    if not (request.user.is_superuser or is_editor(request.user)):
+        raise PermissionDenied
+
     education = get_object_or_404(Education, pk=education_id)
     form = EducationForm(request.POST or None, instance=education)
 
@@ -213,7 +250,11 @@ def update_education(request, education_id):
     return render(request, "education_form.html", context)
 
 
+@login_required(login_url="/login/")
 def delete_education(request, education_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     education = get_object_or_404(Education, pk=education_id)
 
     if request.method == "POST":
@@ -229,10 +270,31 @@ def get_education_json(request):
     education = Education.objects.all()
 
     if selected_degree:
-        education = education.filter(degree=selected_degree)
+        education = Education.objects.filter(degree=selected_degree)
 
-    education_json = serializers.serialize("json", education)
+    # concrete_fields tidak memuat ManyToMany, sehingga `starred_by` (ID akun
+    # pengguna) tidak ikut terekspos di endpoint publik ini.
+    education_json = serializers.serialize("json", education,
+                                           fields=[
+                                               f.name for f in Education._meta.concrete_fields],
+                                           use_natural_foreign_keys=True,
+                                           )
     return HttpResponse(education_json, content_type="application/json")
+
+
+@login_required(login_url="/login/")
+def toggle_education_star(request, education_id):
+    education = get_object_or_404(Education, pk=education_id)
+
+    if request.method == "POST":
+        # Kalau akun ini sudah pernah memberi star, batalkan star-nya.
+        # Kalau belum, tambahkan star.
+        if request.user in education.starred_by.all():
+            education.starred_by.remove(request.user)
+        else:
+            education.starred_by.add(request.user)
+
+    return redirect("main:show_education")
 
 # authentication
 

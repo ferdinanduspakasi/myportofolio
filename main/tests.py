@@ -1,5 +1,6 @@
 import json
 
+from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -87,6 +88,9 @@ class EducationTest(TestCase):
             field_of_study="IPA",
             description="Fokus pada pengembangan web dan rekayasa perangkat lunak.",
         )
+        self.owner = User.objects.create_superuser(
+            "owner", password="pw12345!")
+        self.client.force_login(self.owner)
 
     def test_education_url_is_accessible(self):
         response = self.client.get(reverse("main:show_education"))
@@ -209,8 +213,11 @@ class EducationTest(TestCase):
         self.assertRedirects(response, reverse("main:show_education"))
         self.assertFalse(
             Education.objects.filter(pk=self.education.id).exists())
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+>>>>>>> origin/main
 
 
 class EducationAuthorizationTest(TestCase):
@@ -396,6 +403,7 @@ class RoleBadgeTest(TestCase):
         for name in ("main:show_experience", "main:show_education"):
             self.assertContains(self.badge(
                 self.editor, name), "role-badge--editor")
+<<<<<<< HEAD
 
 
 class ExperienceAjaxTest(TestCase):
@@ -461,3 +469,5 @@ class ExperienceAjaxTest(TestCase):
         self.assertEqual(f["star_count"], 1)
         self.assertEqual(f["starred_by_names"], "biasa")
 >>>>>>> Stashed changes
+=======
+>>>>>>> origin/main
