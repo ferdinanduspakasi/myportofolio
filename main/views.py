@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core import serializers
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 
@@ -15,6 +15,7 @@ import datetime
 # otorisasi
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.views.decorators.http import require_POST
 
 # profile
 
@@ -41,19 +42,12 @@ def show_main(request):
 
 
 def show_experience(request):
-    json_response = get_experience_json(request)
-
-    experience = serializers.deserialize(
-        "json",
-        json_response.content.decode("utf-8"),
-    )
-    experience = [e.object for e in experience]
     title_query = request.GET.get("title", "").strip()
 
     context = {
         "name": "Ferdinandus Pakasi",
-        "experience_list": experience,
         "title_query": title_query,
+        "form": ExperienceForm(),
     }
     return render(request, "experience.html", context)
 
@@ -79,13 +73,58 @@ def create_experience(request):
 
 def get_experience_json(request):
     title_query = request.GET.get("title", "").strip()
-    experience = Experience.objects.all()
+    experience_list = Experience.objects.prefetch_related('starred_by').all()
 
     if title_query:
-        experience = Experience.objects.filter(title__icontains=title_query)
+        experience_list = experience_list.filter(title__icontains=title_query)
 
+<<<<<<< Updated upstream
     experience_json = serializers.serialize("json", experience, use_natural_foreign_keys=True)
     return HttpResponse(experience_json, content_type="application/json")
+=======
+    # Konstruksi data JSON secara manual agar bisa menyisipkan logika Star
+    data = []
+    for experience in experience_list:
+        starred_users = experience.starred_by.all()
+        is_starred = request.user in starred_users if request.user.is_authenticated else False
+        starred_by_names = ", ".join([u.username for u in starred_users])
+
+        data.append({
+            "pk": str(experience.id),
+            "fields": {
+                "title": experience.title,
+                "description": experience.description,
+                "category": experience.get_category_display(),
+                "thumbnail": experience.thumbnail,
+                "is_ongoing": experience.is_ongoing,
+                "star_count": starred_users.count(),
+                "is_starred": is_starred,
+                "starred_by_names": starred_by_names,
+            }
+        })
+
+    return JsonResponse(data, safe=False)
+
+
+@require_POST
+def create_experience_ajax(request):
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan pengalaman."},
+            status=403,
+        )
+
+    form = ExperienceForm(request.POST)
+
+    if form.is_valid():
+        experience = form.save()
+        return JsonResponse(
+            {"message": "Pengalaman berhasil ditambahkan.", "pk": str(experience.id)},
+            status=201,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+>>>>>>> Stashed changes
 
 
 @login_required(login_url="/login/")
