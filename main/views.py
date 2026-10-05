@@ -135,7 +135,8 @@ def create_experience_ajax(request):
     if form.is_valid():
         experience = form.save()
         return JsonResponse(
-            {"message": "Pengalaman berhasil ditambahkan.", "pk": str(experience.id)},
+            {"message": "Pengalaman berhasil ditambahkan.",
+                "pk": str(experience.id)},
             status=201,
         )
 
@@ -215,6 +216,17 @@ def create_education(request):
         "is_edit": False,
     }
     return render(request, "education_form.html", context)
+
+
+@require_POST
+def create_education_ajax(request):
+    # Pengecekan peran dilakukan di sini (server), bukan hanya dengan
+    # menyembunyikan tombol di template. Balasan berupa JSON, bukan redirect.
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan riwayat pendidikan."},
+            status=403,
+        )
 
 
 @login_required(login_url="/login/")
