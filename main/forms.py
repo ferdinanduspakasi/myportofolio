@@ -130,3 +130,33 @@ class EducationForm(ModelForm):
             ),
         }
 
+    # Sanitasi XSS di sisi server: buang tag HTML dari setiap input teks
+    # sebelum divalidasi lebih lanjut dan disimpan ke database.
+    def clean_institution_name(self):
+        institution_name = strip_tags(
+            self.cleaned_data["institution_name"]).strip()
+        if not institution_name:
+            raise ValidationError(
+                "Nama institusi tidak boleh hanya berisi tag HTML.")
+        return institution_name
+
+    def clean_field_of_study(self):
+        field_of_study = strip_tags(
+            self.cleaned_data["field_of_study"]).strip()
+        if not field_of_study:
+            raise ValidationError(
+                "Bidang studi tidak boleh hanya berisi tag HTML.")
+        return field_of_study
+
+    def clean_logo_url(self):
+        logo_url = strip_tags(self.cleaned_data.get("logo_url") or "").strip()
+        # Hanya izinkan URL http(s) agar skema berbahaya (mis. javascript:)
+        # tidak pernah tersimpan sebagai sumber gambar.
+        if logo_url and not logo_url.lower().startswith(("http://", "https://")):
+            raise ValidationError(
+                "URL logo harus diawali dengan http:// atau https://.")
+        return logo_url or None
+
+    def clean_description(self):
+        return strip_tags(self.cleaned_data["description"]).strip()
+
