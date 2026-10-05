@@ -1,6 +1,6 @@
 from django.contrib import messages
-from django.core import serializers
-from django.http import HttpResponse, JsonResponse
+from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 
@@ -135,8 +135,7 @@ def create_experience_ajax(request):
     if form.is_valid():
         experience = form.save()
         return JsonResponse(
-            {"message": "Pengalaman berhasil ditambahkan.",
-                "pk": str(experience.id)},
+            {"message": "Pengalaman berhasil ditambahkan.", "pk": str(experience.id)},
             status=201,
         )
 
@@ -177,24 +176,62 @@ def toggle_star(request, experience_id):
 
 
 def show_education(request):
-    json_response = get_education_json(request)
-
-    education = serializers.deserialize(
-        "json",
-        json_response.content.decode("utf-8"),
-    )
-    education_list = [e.object for e in education]
-    selected_degree = request.GET.get("degree", "")
-
+    # Hanya merender kerangka halaman. Data daftar dimuat browser lewat AJAX
+    # dari get_education_json (lihat templates/education.html).
     context = {
         "name": "Ferdinandus Pakasi",
-        "education_list": education_list,
+        "form": EducationForm(),
         "degree_choices": Education.DEGREE_CHOICES,
-        "selected_degree": selected_degree,
+        "search_query": request.GET.get("q", "").strip(),
+        "selected_degree": request.GET.get("degree", "").strip(),
         # Dipakai template untuk menampilkan tombol Edit bagi Editor.
         "is_editor": is_editor(request.user),
     }
     return render(request, "education.html", context)
+
+
+def get_education_json(request):
+    search_query = request.GET.get("q", "").strip()
+    selected_degree = request.GET.get("degree", "").strip()
+    education_list = Education.objects.prefetch_related("starred_by").all()
+
+    if selected_degree:
+        education_list = education_list.filter(degree=selected_degree)
+
+    if search_query:
+        education_list = education_list.filter(
+            Q(institution_name__icontains=search_query)
+            | Q(field_of_study__icontains=search_query)
+        )
+
+    # Konstruksi data JSON secara manual agar bisa menyisipkan logika Star.
+    # Hanya jumlah star dan status star milik pengguna yang sedang login yang
+    # dikirim, sehingga username pengguna lain tidak terekspos di endpoint publik.
+    data = []
+    for education in education_list:
+        # .all() memakai hasil prefetch_related, jadi tidak ada query tambahan per item.
+        starred_users = list(education.starred_by.all())
+        is_starred = (
+            request.user.is_authenticated
+            and any(u.pk == request.user.pk for u in starred_users)
+        )
+
+        data.append({
+            "pk": str(education.id),
+            "fields": {
+                "institution_name": education.institution_name,
+                "degree": education.degree,
+                "degree_display": education.get_degree_display(),
+                "field_of_study": education.field_of_study,
+                "logo_url": education.logo_url or "",
+                "description": education.description,
+                "is_ongoing": education.is_ongoing,
+                "star_count": len(starred_users),
+                "is_starred": is_starred,
+            }
+        })
+
+    return JsonResponse(data, safe=False)
 
 
 @login_required(login_url="/login/")
@@ -227,6 +264,18 @@ def create_education_ajax(request):
             {"message": "Hanya pemilik portofolio yang dapat menambahkan riwayat pendidikan."},
             status=403,
         )
+
+    form = EducationForm(request.POST)
+
+    if form.is_valid():
+        education = form.save()
+        return JsonResponse(
+            {"message": "Riwayat pendidikan berhasil ditambahkan.",
+                "pk": str(education.id)},
+            status=201,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
 
 @login_required(login_url="/login/")
@@ -265,23 +314,6 @@ def delete_education(request, education_id):
         return redirect("main:show_education")
 
     return redirect("main:show_education")
-
-
-def get_education_json(request):
-    selected_degree = request.GET.get("degree", "").strip()
-    education = Education.objects.all()
-
-    if selected_degree:
-        education = Education.objects.filter(degree=selected_degree)
-
-    # concrete_fields tidak memuat ManyToMany, sehingga `starred_by` (ID akun
-    # pengguna) tidak ikut terekspos di endpoint publik ini.
-    education_json = serializers.serialize("json", education,
-                                           fields=[
-                                               f.name for f in Education._meta.concrete_fields],
-                                           use_natural_foreign_keys=True,
-                                           )
-    return HttpResponse(education_json, content_type="application/json")
 
 
 @login_required(login_url="/login/")
