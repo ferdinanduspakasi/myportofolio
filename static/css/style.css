@@ -896,3 +896,39 @@ h1,
 .toast-success { border-left: 4px solid #22c55e; }
 .toast-error { border-left: 4px solid #b42318; }
 .toast-normal { border-left: 4px solid var(--accent); }
+
+/* Jumlah dan hapus pencarian */
+.result-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.result-info__text strong {
+    color: var(--ink);
+}
+
+.result-info__clear {
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.result-info__clear:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.result-info__clear:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}

@@ -10,22 +10,16 @@
             <div class="experience-header">
                 <h1>Education</h1>
                 {% if user.is_superuser %}
-                <button type="button"
-                        class="button experience-add-button"
-                        popovertarget="add-education-modal">
+                <button type="button" class="button experience-add-button" popovertarget="add-education-modal">
                     <span aria-hidden="true">+</span>
                     Tambah Pendidikan
                 </button>
                 {% endif %}
             </div>
             <form id="education-search-form" class="experience-search">
-                <input type="search"
-                       id="search-input"
-                       name="q"
-                       value="{{ search_query }}"
-                       placeholder="Cari berdasarkan institusi atau bidang studi"
-                       class="experience-search__input"
-                       aria-label="Cari berdasarkan institusi atau bidang studi">
+                <input type="search" id="search-input" name="q" value="{{ search_query }}"
+                    placeholder="Cari berdasarkan institusi atau bidang studi" class="experience-search__input"
+                    aria-label="Cari berdasarkan institusi atau bidang studi">
                 <button type="submit" class="button">Cari</button>
             </form>
 
@@ -39,6 +33,14 @@
                     </option>
                     {% endfor %}
                 </select>
+            </div>
+
+            <!-- Jumlah hasil + tombol hapus pencarian -->
+            <div id="result-info" class="result-info hide" aria-live="polite">
+                <span id="result-count" class="result-info__text"></span>
+                <button type="button" id="clear-search" class="result-info__clear hide">
+                    ✕ Hapus pencarian
+                </button>
             </div>
 
             <!-- Loading State -->
@@ -63,7 +65,7 @@
 </main>
 
 {% if user.is_superuser %}
-    {% include "components/education_form_modal.html" %}
+{% include "components/education_form_modal.html" %}
 {% endif %}
 
 <script>
@@ -81,6 +83,9 @@
     const searchForm = document.getElementById('education-search-form');
     const searchInput = document.getElementById('search-input');
     const degreeFilter = document.getElementById('degree-filter');
+    const resultInfo = document.getElementById('result-info');
+    const resultCount = document.getElementById('result-count');
+    const clearSearchButton = document.getElementById('clear-search');
     const SEARCH_DEBOUNCE_DELAY = 300;
     let searchDebounceTimer;
 
@@ -90,6 +95,24 @@
         errorState.classList.toggle('hide', !showError);
         emptyState.classList.toggle('hide', !showEmpty);
         gridContainer.classList.toggle('hide', !showGrid);
+    }
+
+    // Menampilkan jumlah hasil, mis. "3 hasil untuk 'universitas'",
+    // dan tombol hapus pencarian jika ada kata kunci.
+    function updateResultInfo(total, searchQuery, degree) {
+        // Tidak ada pencarian/filter aktif -> sembunyikan info
+        if (!searchQuery && !degree) {
+            resultInfo.classList.add('hide');
+            return;
+        }
+
+        // textContent dipakai agar input pengguna tidak dieksekusi sebagai HTML
+        resultCount.textContent = searchQuery
+            ? `${total} hasil untuk '${searchQuery}'`
+            : `${total} hasil`;
+
+        clearSearchButton.classList.toggle('hide', !searchQuery);
+        resultInfo.classList.remove('hide');
     }
 
     // Mengubah karakter khusus HTML menjadi entity agar ditampilkan sebagai teks
@@ -130,7 +153,7 @@
             ? `Dibintangi oleh ${education.star_count} pengguna`
             : "Jadilah yang pertama memberi star";
 
-                // Dummy UUID digunakan untuk digantikan oleh ID asli dari data JSON
+        // Dummy UUID digunakan untuk digantikan oleh ID asli dari data JSON
         const editUrl = "{% url 'main:update_education' '00000000-0000-0000-0000-000000000000' %}"
             .replace('00000000-0000-0000-0000-000000000000', educationId);
         const deleteUrl = "{% url 'main:delete_education' '00000000-0000-0000-0000-000000000000' %}"
@@ -206,6 +229,8 @@
 
             const educationData = await response.json();
 
+            updateResultInfo(educationData.length, searchQuery, degree);
+
             if (educationData.length === 0) {
                 displayPageSection({ showEmpty: true });
             } else {
@@ -218,6 +243,7 @@
         } catch (error) {
             if (error.name === 'AbortError') return;
             console.error('Error loading education:', error);
+            resultInfo.classList.add('hide');
             displayPageSection({ showError: true });
         }
     }
@@ -227,23 +253,31 @@
     }
 
     // Event Handlers untuk Form Search (debounce saat mengetik)
-    searchInput.addEventListener("input", function() {
+    searchInput.addEventListener("input", function () {
         clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(function() {
+        searchDebounceTimer = setTimeout(function () {
             searchEducation();
         }, SEARCH_DEBOUNCE_DELAY);
     });
 
-    searchForm.addEventListener("submit", function(event) {
+    searchForm.addEventListener("submit", function (event) {
         event.preventDefault();
         clearTimeout(searchDebounceTimer);
         searchEducation();
     });
 
     // Filter jenjang juga memakai AJAX, tanpa reload halaman
-    degreeFilter.addEventListener("change", function() {
+    degreeFilter.addEventListener("change", function () {
         clearTimeout(searchDebounceTimer);
         searchEducation();
+    });
+
+    // Hapus kata kunci pencarian (filter jenjang tetap dipertahankan)
+    clearSearchButton.addEventListener("click", function () {
+        clearTimeout(searchDebounceTimer);
+        searchInput.value = "";
+        searchEducation();
+        searchInput.focus();
     });
 
     // Membaca nilai cookie, digunakan untuk mengambil token CSRF
