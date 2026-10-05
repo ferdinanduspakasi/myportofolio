@@ -33,6 +33,18 @@ Kelas : PBP-D
   menerima `POST` beserta `{% csrf_token %}`.
 - **Role badge di navbar** *(extra feature)* — badge kecil di navbar yang menunjukkan peran akun
   yang sedang login (Owner / Editor / User).
+- **AJAX pada Education & Experience** — daftar data dimuat lewat `fetch()` dari endpoint JSON
+  (`/api/education/`, `/api/experience/`) tanpa reload halaman, lengkap dengan kondisi loading,
+  error, dan data kosong.
+- **Pencarian & filter tanpa reload** — pencarian institusi/bidang studi dengan *debounce* 300 ms
+  dan filter jenjang, memakai `AbortController` agar respons lama tidak menimpa yang baru.
+- **Tambah data lewat modal + AJAX** — form dikirim dengan `fetch()` beserta header
+  `X-CSRFToken`, dibalas JSON (`201`/`400`/`403`) dengan pengecekan peran di server, lalu daftar
+  diperbarui otomatis dan toast notifikasi ditampilkan.
+- **Perlindungan XSS** — `strip_tags` di `clean_<field>` pada form (server) dan `escapeHtml()`
+  sebelum data disisipkan ke HTML (client).
+- **Jumlah hasil & tombol hapus pencarian** *(extra feature)* — menampilkan "N hasil untuk '...'"
+  dan tombol untuk mengosongkan pencarian.
 
 ## Cara Menjalankan Proyek 
 
@@ -114,6 +126,17 @@ Lalu buka `http://127.0.0.1:8000/` di browser.
     login. Ditambahkan context processor `user_role` (`owner`, `editor`, atau `user`) sehingga
     `base.html` dapat menampilkan badge di semua halaman tanpa mengirim variabel dari tiap view,
     lengkap dengan `RoleBadgeTest`.
+
+- **Tutorial 5** — Menerapkan AJAX pada Experience: endpoint JSON, `create_experience_ajax`,
+  modal form, toast (`toast.js`), dan sanitasi XSS dengan `strip_tags`.
+- **Tugas 5** — Menerapkan pola yang sama pada **Education**: `show_education` hanya merender
+  kerangka halaman, data dimuat dari `get_education_json` (mendukung `q` dan `degree`),
+  ditambah `create_education_ajax` dengan pengecekan peran, modal form, pencarian ber-debounce,
+  dan unit test `EducationAjaxTest`.
+  - **Extra feature**: Jumlah hasil dan tombol hapus pencarian. Sebelumnya pengguna tidak tahu
+    berapa data yang cocok dan harus menghapus kata kunci secara manual. Ditambahkan
+    keterangan "N hasil untuk '...'" (tetap tampil saat hasil 0) dan tombol hapus yang
+    mengosongkan input lalu memuat ulang data.
 
 ### Refleksi Tugas 1
 
@@ -233,6 +256,58 @@ Lalu buka `http://127.0.0.1:8000/` di browser.
    data yang dikirim lewat jaringan berbentuk teks yang aman dan dapat dibaca oleh berbagai
    platform, tidak bergantung pada implementasi Python/Django secara spesifik.
 
+  ### Refleksi Tugas 5
+
+1. *Debouncing* adalah teknik menunda eksekusi sebuah fungsi sampai pengguna berhenti memicu
+   event tersebut selama jeda tertentu. Setiap kali event terjadi, timer sebelumnya dibatalkan
+   dan timer baru dimulai, sehingga fungsi hanya berjalan sekali setelah event berhenti. Pada
+   proyek ini, setiap ketikan di kolom pencarian Education memicu event `input`. Handler-nya
+   memanggil `clearTimeout(searchDebounceTimer)` lalu `setTimeout(...)` dengan jeda
+   `SEARCH_DEBOUNCE_DELAY` (300 ms), sehingga `searchEducation()` baru dipanggil setelah
+   pengguna berhenti mengetik. Tanpa debouncing, mengetik "universitas" (11 huruf) akan
+   mengirim 11 request ke `/api/education/`, padahal hanya hasil akhirnya yang dibutuhkan. Hal
+   ini memboroskan bandwidth dan membebani server serta database (tiap request menjalankan
+   query `icontains`). Request juga bisa selesai dengan urutan terbalik sehingga hasil lama
+   menimpa hasil baru, dan UI berkedip karena `#grid` terus dibangun ulang. Itu sebabnya
+   debouncing penting pada fitur pencarian AJAX. Pada proyek ini debouncing dilengkapi
+   `AbortController` untuk membatalkan request lama yang masih berjalan.
+
+2. `await` membuat fungsi `async` menunggu sebuah *Promise* selesai sebelum baris berikutnya
+   dijalankan, lalu mengembalikan nilai hasil Promise tersebut, tanpa memblokir halaman
+   (browser tetap bisa menangani event lain selama menunggu). `fetch()` mengembalikan Promise
+   yang baru terpenuhi setelah header respons diterima. Pada `fetchEducation()`, saya memakai
+   `const response = await fetch(...)` agar `response` berisi objek `Response` sungguhan,
+   kemudian `await response.json()` untuk membaca body-nya sebagai array JavaScript (proses
+   ini juga asinkron). Jika `await` tidak dipakai, `response` hanyalah objek Promise yang
+   belum selesai: `response.ok` bernilai `undefined` (sehingga `!response.ok` selalu benar dan
+   kode salah mengira request gagal), dan `response.json` tidak tersedia pada Promise sehingga
+   memunculkan error. Kalau kode setelahnya tetap berjalan, `educationData` hanya berisi
+   Promise, bukan array, sehingga `.length` dan `.forEach()` tidak bekerja. Selain itu,
+   `try/catch` tidak akan menangkap kegagalan jaringan karena error baru terjadi nanti,
+   di luar blok `try`, sehingga state error (`#error`) tidak pernah tampil, dan state loading
+   bisa langsung hilang sebelum data datang. Singkatnya, `await` menjamin urutan eksekusi
+   (ambil data, lalu parse, lalu tampilkan) dan membuat penanganan error lewat `try/catch`
+   bekerja.
+
+3. XSS (*Cross-Site Scripting*) adalah serangan ketika penyerang menyisipkan kode
+   JavaScript berbahaya ke dalam halaman web yang kemudian dieksekusi di browser korban,
+   misalnya lewat input `<img src="x" onerror="alert('XSS!')">`. Jika disimpan di database dan
+   ditampilkan ke pengunjung lain (*stored XSS*), script tersebut berjalan atas nama situs
+   dan bisa mencuri cookie/sesi, mengubah isi halaman, atau melakukan aksi atas nama korban.
+   Data yang ditampilkan lewat AJAX/JavaScript lebih rentan karena Django Template secara
+   default melakukan *auto-escaping* (`<` menjadi `&lt;`, dan seterusnya), sehingga `{{ education.institution_name }}`
+   aman tanpa usaha tambahan. Sebaliknya, JavaScript yang membangun HTML sendiri, misalnya
+   lewat template literal yang diberikan ke `innerHTML` seperti pada `buildEducationCardElement()`,
+   tidak memiliki proteksi otomatis: string mentah dari JSON akan diparse browser sebagai
+   HTML, sehingga tag dan atribut `onerror` ikut dieksekusi. Karena itu proyek ini memakai
+   pertahanan berlapis. Di server, `clean_institution_name` dan sejenisnya memakai
+   `strip_tags` sehingga tag HTML dibuang sebelum disimpan, input yang hanya berisi tag
+   ditolak, dan URL berskema `javascript:` ditolak. Di client, setiap nilai teks dibungkus
+   `escapeHtml()` sebelum disisipkan ke `innerHTML`, dan `textContent` dipakai untuk teks
+   seperti keterangan jumlah hasil pencarian. Dua lapisan ini saling melengkapi: sanitasi
+   server melindungi data yang tersimpan, sedangkan escaping client melindungi tampilan
+   seandainya ada data kotor yang lolos.
+
 
 ## AI Disclosure
 
@@ -307,3 +382,22 @@ langsung di browser dengan akun berbeda untuk tiap peran sebelum melakukan commi
 Keterbatasan yang saya temukan: AI mendorong pada pendekatan yang singkat dan modular. Walaupun
 memang terlihat ringkas dan rapih, tapi di satu sisi mengurangi readability dan kurang baik
 sebagai contoh untuk bahan pemebelajaran.
+
+**Tugas 5** - Saya menggunakan Claude (Anthropic, via claude.ai) untuk membantu pengerjaan Tugas 5 ini.
+Chat Link: https://claude.ai/share/276e5634-65ce-4bec-9ccc-c9d25f814369 
+Bagian yang dibantu AI: 
+
+- Menulis sebagian besar kode AJAX pada Education (`get_education_json`, `create_education_ajax`,
+  `education.html`, modal form), toast, sanitasi XSS, dan `EducationAjaxTest`.
+- Menulis fitur tambahan jumlah hasil dan tombol hapus pencarian, serta membantu menyusun README.
+
+Strategi prompting: Untuk membuat sebagian kode, saya memanfaatkan bantuan AI, dengan tetap berusaha 
+memahami kodenya. Saya mengunggah source code dan PDF instruksi tugas, meminta perubahan per bagian kecil, 
+bertanya ketika ada yang belum jelas, lalu menguji langsung di browser dengan tiap peran serta payload XSS 
+sebelum commit.
+
+Keterbatasan yang saya temukan: AI tidak bisa menjalankan aplikasi di browser, sehingga pengujian
+akhir harus saya lakukan sendiri. Kodenya cenderung padat dan melebihi permintaan, dan jawaban
+refleksinya cenderung generik sehingga perlu saya sesuaikan dengan kode proyek. Terdapat juga beberapa
+bug yang muncul, misalnya posisi jumlah dan hapus pencarian (extra feature) dimana terdapat kesalahan
+pada posisi htmlnya, yang saya perbaiki secara manual.
