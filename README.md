@@ -36,6 +36,9 @@ Kelas : PBP-D
 - **AJAX pada Education & Experience** — daftar data dimuat lewat `fetch()` dari endpoint JSON
   (`/api/education/`, `/api/experience/`) tanpa reload halaman, lengkap dengan kondisi loading,
   error, dan data kosong.
+- **Django REST Framework pada Experience** — API versi `/api/v1/experiences/`
+  untuk daftar, detail, CRUD, pencarian, dan star, dengan serializer, validasi, permission,
+  session/CSRF, integrasi AJAX, serta test API.
 - **Pencarian & filter tanpa reload** — pencarian institusi/bidang studi dengan *debounce* 300 ms
   dan filter jenjang, memakai `AbortController` agar respons lama tidak menimpa yang baru.
 - **Tambah data lewat modal + AJAX** — form dikirim dengan `fetch()` beserta header
@@ -137,6 +140,8 @@ Lalu buka `http://127.0.0.1:8000/` di browser.
     berapa data yang cocok dan harus menghapus kata kunci secara manual. Ditambahkan
     keterangan "N hasil untuk '...'" (tetap tampil saat hasil 0) dan tombol hapus yang
     mengosongkan input lalu memuat ulang data.
+- **Tutorial 7** — Mengganti integrasi AJAX Experience ke Django REST Framework untuk API
+  daftar/detail/CRUD/star, validasi serializer, permission, CSRF, dan pengujian API.
 
 ### Refleksi Tugas 1
 
