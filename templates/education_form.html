@@ -7,7 +7,7 @@
     <section class="education-section">
         <div class="container">
             <h1>{% if is_edit %}Edit Riwayat Pendidikan{% else %}Tambah Riwayat Pendidikan{% endif %}</h1>
-            <form method="post"
+            <form id="education-edit-form" method="post"
                 action="{% if is_edit %}{% url 'main:update_education' education.id %}{% else %}{% url 'main:create_education' %}{% endif %}"
                 class="experience-form">
                 {% csrf_token %}
@@ -21,11 +21,169 @@
                 </div>
                 {% endfor %}
                 <button type="submit" class="button">
-                    {% if is_edit %}Simpan Perubahan{% else %}Tambah Pendidikan{% endif %}
+                    {% if is_edit %}Tinjau Perubahan{% else %}Tambah Pendidikan{% endif %}
                 </button>
                 <a href="{% url 'main:show_education' %}" class="button button-secondary">Batal</a>
             </form>
         </div>
     </section>
 </main>
+{% if is_edit %}
+<dialog id="education-edit-confirmation" class="education-confirm-dialog" aria-labelledby="education-edit-confirmation-title">
+    <div class="education-confirm-dialog__content">
+        <h2 id="education-edit-confirmation-title">Konfirmasi perubahan</h2>
+        <p>Periksa perubahan berikut sebelum menyimpan:</p>
+        <ul id="education-edit-change-list" class="education-edit-change-list"></ul>
+        <div class="education-confirm-dialog__actions">
+            <button type="button" id="cancel-education-edit" class="button button-secondary">Kembali mengedit</button>
+            <button type="button" id="confirm-education-edit" class="button">Simpan perubahan</button>
+        </div>
+    </div>
+</dialog>
+<script>
+    const educationEditForm = document.getElementById('education-edit-form');
+    const EDUCATION_DETAIL_ENDPOINT = "{% url 'api:education-detail' education.id %}";
+    const EDUCATION_LIST_URL = "{% url 'main:show_education' %}";
+    const editConfirmation = document.getElementById('education-edit-confirmation');
+    const changeList = document.getElementById('education-edit-change-list');
+    const confirmEditButton = document.getElementById('confirm-education-edit');
+    const cancelEditButton = document.getElementById('cancel-education-edit');
+    const editableFields = [
+        ['institution_name', 'Nama institusi'],
+        ['degree', 'Jenjang pendidikan'],
+        ['field_of_study', 'Bidang studi'],
+        ['logo_url', 'URL logo'],
+        ['description', 'Deskripsi'],
+        ['ended_at', 'Tanggal selesai'],
+    ];
+    const originalValues = Object.fromEntries(editableFields.map(([name]) => [
+        name,
+        educationEditForm.elements.namedItem(name)?.value ?? '',
+    ]));
+    let pendingPayload = null;
+
+    function getCookie(name) {
+        const prefix = `${name}=`;
+        const cookie = document.cookie.split(';')
+            .map(value => value.trim())
+            .find(value => value.startsWith(prefix));
+        return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null;
+    }
+
+    function getApiErrorMessage(data, status) {
+        const messages = Object.entries(data).flatMap(([field, value]) => {
+            const errors = Array.isArray(value) ? value : [value];
+            return errors.filter(message => typeof message === 'string')
+                .map(message => field === 'detail' ? message : `${field}: ${message}`);
+        });
+        return messages.join(' ') || `Permintaan gagal (HTTP ${status}).`;
+    }
+
+    function getDisplayValue(value) {
+        return value === '' || value === null ? '(kosong)' : value;
+    }
+
+    function getFieldDisplayValue(name, value) {
+        if (name === 'degree') {
+            const degreeSelect = educationEditForm.elements.namedItem('degree');
+            const option = Array.from(degreeSelect.options).find(item => item.value === value);
+            return option?.textContent.trim() || getDisplayValue(value);
+        }
+        return getDisplayValue(value);
+    }
+
+    function showChangeSummary(changes) {
+        changeList.replaceChildren();
+        changes.forEach(({ name, label, oldValue, newValue }) => {
+            const item = document.createElement('li');
+            item.className = 'education-edit-change-list__item';
+
+            const fieldLabel = document.createElement('strong');
+            fieldLabel.className = 'education-edit-change-list__label';
+            fieldLabel.textContent = label;
+
+            const values = document.createElement('div');
+            values.className = 'education-edit-change-list__values';
+            [['Sebelumnya', oldValue], ['Menjadi', newValue]].forEach(([caption, value]) => {
+                const valueBlock = document.createElement('div');
+                const valueCaption = document.createElement('span');
+                valueCaption.textContent = caption;
+                const valueText = document.createElement('p');
+                valueText.textContent = getFieldDisplayValue(name, value);
+                valueBlock.append(valueCaption, valueText);
+                values.appendChild(valueBlock);
+            });
+
+            item.append(fieldLabel, values);
+            changeList.appendChild(item);
+        });
+    }
+
+    function collectEducationChanges() {
+        const fields = new FormData(educationEditForm);
+        const payload = Object.fromEntries(editableFields.map(([name]) => [name, fields.get(name) ?? '']));
+        const changes = editableFields
+            .filter(([name]) => originalValues[name] !== payload[name])
+            .map(([name, label]) => ({
+                name,
+                label,
+                oldValue: originalValues[name],
+                newValue: payload[name],
+            }));
+
+        payload.logo_url = payload.logo_url || null;
+        payload.ended_at = payload.ended_at || null;
+        return { payload, changes };
+    }
+
+    async function saveEducationChanges() {
+        const submitButton = educationEditForm.querySelector('button[type="submit"]');
+        confirmEditButton.disabled = true;
+        cancelEditButton.disabled = true;
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch(EDUCATION_DETAIL_ENDPOINT, {
+                method: 'PATCH',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify(pendingPayload),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(getApiErrorMessage(data, response.status));
+            }
+
+            editConfirmation.close();
+            showToast('Berhasil', 'Riwayat pendidikan berhasil diperbarui.', 'success');
+            window.setTimeout(() => window.location.assign(EDUCATION_LIST_URL), 700);
+        } catch (error) {
+            editConfirmation.close();
+            showToast('Gagal menyimpan perubahan', error.message, 'error');
+            submitButton.disabled = false;
+        } finally {
+            confirmEditButton.disabled = false;
+            cancelEditButton.disabled = false;
+        }
+    }
+
+    educationEditForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const { payload, changes } = collectEducationChanges();
+        if (changes.length === 0) {
+            showToast('Tidak ada perubahan', 'Ubah setidaknya satu field sebelum menyimpan.', 'normal');
+            return;
+        }
+        pendingPayload = payload;
+        showChangeSummary(changes);
+        editConfirmation.showModal();
+    });
+
+    cancelEditButton.addEventListener('click', () => editConfirmation.close());
+    confirmEditButton.addEventListener('click', saveEducationChanges);
+</script>
+{% endif %}
 {% endblock content %}

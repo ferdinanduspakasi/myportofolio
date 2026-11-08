@@ -9,3 +9,17 @@ class IsPortfolioOwnerOrReadOnly(BasePermission):
             request.method in SAFE_METHODS
             or request.user.is_superuser
         )
+
+
+class IsPortfolioOwnerOrEditorOrReadOnly(BasePermission):
+    message = "Only the portfolio owner or an editor can change this content."
+
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+        if not request.user.is_authenticated:
+            return False
+        if request.user.is_superuser:
+            return True
+        is_editor = request.user.groups.filter(name="Editor").exists()
+        return is_editor and request.method in ("PUT", "PATCH")

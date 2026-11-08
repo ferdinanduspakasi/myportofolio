@@ -807,10 +807,17 @@ h1,
     align-items: center;
     gap: 0.4rem;
     background: var(--ink);
+    color: var(--paper);
 }
 
 .button-star.is-starred {
     background: var(--accent);
+    color: white;
+}
+
+#dark-mode-toggle:checked ~ .page .button-star:not(.is-starred) {
+    background: var(--ink);
+    color: var(--paper);
 }
 
 .star-count {
@@ -931,4 +938,96 @@ h1,
 .result-info__clear:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+}
+
+/* Education edit confirmation */
+.education-confirm-dialog {
+    width: min(38rem, calc(100% - 2rem));
+    max-width: none;
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--ink);
+    background: var(--card);
+}
+
+.education-confirm-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.58);
+}
+
+.education-confirm-dialog__content {
+    padding: 1.5rem;
+}
+
+.education-confirm-dialog__content h2 {
+    margin-bottom: 0.35rem;
+}
+
+.education-confirm-dialog__content > p {
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+}
+
+.education-edit-change-list {
+    display: grid;
+    gap: 0.75rem;
+    max-height: min(50vh, 24rem);
+    margin: 0 0 1.25rem;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.education-edit-change-list__item {
+    padding: 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow-wrap: anywhere;
+}
+
+.education-edit-change-list__label {
+    display: block;
+    margin-bottom: 0.45rem;
+}
+
+.education-edit-change-list__values {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.education-edit-change-list__values span {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.education-edit-change-list__values p {
+    white-space: pre-wrap;
+}
+
+.education-confirm-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+@media (max-width: 480px) {
+    .education-confirm-dialog__content {
+        padding: 1rem;
+    }
+
+    .education-edit-change-list__values {
+        grid-template-columns: 1fr;
+        gap: 0.35rem;
+    }
+
+    .education-confirm-dialog__actions {
+        flex-direction: column-reverse;
+    }
+
+    .education-confirm-dialog__actions .button {
+        width: 100%;
+    }
 }
