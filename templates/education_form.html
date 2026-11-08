@@ -7,7 +7,7 @@
     <section class="education-section">
         <div class="container">
             <h1>{% if is_edit %}Edit Riwayat Pendidikan{% else %}Tambah Riwayat Pendidikan{% endif %}</h1>
-            <form method="post"
+            <form id="education-edit-form" method="post"
                 action="{% if is_edit %}{% url 'main:update_education' education.id %}{% else %}{% url 'main:create_education' %}{% endif %}"
                 class="experience-form">
                 {% csrf_token %}
@@ -28,4 +28,64 @@
         </div>
     </section>
 </main>
+{% if is_edit %}
+<script>
+    const educationEditForm = document.getElementById('education-edit-form');
+    const EDUCATION_DETAIL_ENDPOINT = "{% url 'api:education-detail' education.id %}";
+    const EDUCATION_LIST_URL = "{% url 'main:show_education' %}";
+
+    function getCookie(name) {
+        const prefix = `${name}=`;
+        const cookie = document.cookie.split(';')
+            .map(value => value.trim())
+            .find(value => value.startsWith(prefix));
+        return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null;
+    }
+
+    function getApiErrorMessage(data, status) {
+        const messages = Object.entries(data).flatMap(([field, value]) => {
+            const errors = Array.isArray(value) ? value : [value];
+            return errors.filter(message => typeof message === 'string')
+                .map(message => field === 'detail' ? message : `${field}: ${message}`);
+        });
+        return messages.join(' ') || `Permintaan gagal (HTTP ${status}).`;
+    }
+
+    educationEditForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const submitButton = educationEditForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+
+        const fields = new FormData(educationEditForm);
+        const payload = Object.fromEntries([
+            'institution_name', 'degree', 'field_of_study', 'logo_url',
+            'description', 'ended_at',
+        ].map(name => [name, fields.get(name)]));
+        payload.logo_url = payload.logo_url || null;
+        payload.ended_at = payload.ended_at || null;
+
+        try {
+            const response = await fetch(EDUCATION_DETAIL_ENDPOINT, {
+                method: 'PATCH',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(getApiErrorMessage(data, response.status));
+            }
+
+            showToast('Berhasil', 'Riwayat pendidikan berhasil diperbarui.', 'success');
+            window.setTimeout(() => window.location.assign(EDUCATION_LIST_URL), 700);
+        } catch (error) {
+            showToast('Gagal menyimpan perubahan', error.message, 'error');
+            submitButton.disabled = false;
+        }
+    });
+</script>
+{% endif %}
 {% endblock content %}
