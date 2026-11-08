@@ -807,10 +807,17 @@ h1,
     align-items: center;
     gap: 0.4rem;
     background: var(--ink);
+    color: var(--paper);
 }
 
 .button-star.is-starred {
     background: var(--accent);
+    color: white;
+}
+
+#dark-mode-toggle:checked ~ .page .button-star:not(.is-starred) {
+    background: var(--ink);
+    color: var(--paper);
 }
 
 .star-count {
