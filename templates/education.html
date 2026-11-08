@@ -68,11 +68,16 @@
 {% include "components/education_form_modal.html" %}
 {% endif %}
 
+{% csrf_token %}
 <script>
-    // Konfigurasi
-    const BASE_EDUCATION_ENDPOINT = "{% url 'main:get_education_json' %}";
+    // DRF API endpoints
+    const BASE_EDUCATION_ENDPOINT = "{% url 'api:education-list' %}";
+    const DETAIL_EDUCATION_ENDPOINT = "{% url 'api:education-detail' '00000000-0000-0000-0000-000000000000' %}";
+    const STAR_EDUCATION_ENDPOINT = "{% url 'api:education-star' '00000000-0000-0000-0000-000000000000' %}";
     const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
     const IS_EDITOR = "{{ is_editor|yesno:'true,false' }}" === "true";
+    const IS_AUTHENTICATED = "{{ user.is_authenticated|yesno:'true,false' }}" === "true";
+    const LOGIN_URL = "{% url 'main:login' %}";
     let educationAbortController;
 
     // Elemen DOM
@@ -127,8 +132,8 @@
 
     // Membuat elemen card education
     function buildEducationCardElement(item) {
-        const education = item.fields;
-        const educationId = item.pk;
+        const education = item;
+        const educationId = education.id;
 
         const articleElement = document.createElement('article');
         articleElement.className = 'education-card';
@@ -143,10 +148,6 @@
 
         const statusText = education.is_ongoing ? "Sedang berlangsung" : "Selesai";
 
-        // Dummy UUID digunakan untuk digantikan oleh ID asli dari data JSON
-        const starUrl = "{% url 'main:toggle_education_star' '00000000-0000-0000-0000-000000000000' %}"
-            .replace('00000000-0000-0000-0000-000000000000', educationId);
-
         const isStarredClass = education.is_starred ? " is-starred" : "";
         const starText = education.is_starred ? "Unstar" : "Star";
         const starTitle = education.star_count > 0
@@ -156,21 +157,19 @@
         // Dummy UUID digunakan untuk digantikan oleh ID asli dari data JSON
         const editUrl = "{% url 'main:update_education' '00000000-0000-0000-0000-000000000000' %}"
             .replace('00000000-0000-0000-0000-000000000000', educationId);
-        const deleteUrl = "{% url 'main:delete_education' '00000000-0000-0000-0000-000000000000' %}"
-            .replace('00000000-0000-0000-0000-000000000000', educationId);
 
-        // Tombol Edit/Hapus hanya dirender sesuai peran. Hak akses yang
-        // sebenarnya tetap diperiksa di server (update_education, delete_education).
+        // Tombol aksi menyesuaikan peran; server tetap memeriksa hak akses.
         const editHtml = (IS_SUPERUSER || IS_EDITOR)
             ? `<a href="${editUrl}" class="button">Edit</a>`
             : '';
 
         const deleteHtml = IS_SUPERUSER
-            ? `<form method="post" action="${deleteUrl}" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="button button-danger" onclick="return confirm('Yakin ingin menghapus riwayat pendidikan ini?');">Hapus</button>
-               </form>`
+            ? `<button type="button" class="button button-danger" data-action="delete" data-id="${escapeHtml(educationId)}">Hapus</button>`
             : '';
+
+        const starHtml = IS_AUTHENTICATED
+            ? `<button type="button" class="button button-star${isStarredClass}" data-action="star" data-id="${escapeHtml(educationId)}" title="${escapeHtml(starTitle)}"><span aria-hidden="true">★</span> ${starText} <span class="star-count">${Number(education.star_count) || 0}</span></button>`
+            : `<a href="${LOGIN_URL}" class="button">Login untuk memberi star (${Number(education.star_count) || 0})</a>`;
 
         // Komponen card
         const completeCardHtml = `
@@ -182,16 +181,7 @@
             <p class="education-status">${statusText}</p>
             <div class="education-card-actions experience-card-actions">
                 <div class="experience-actions">
-                    <form method="post" action="${starUrl}" class="star-form">
-                        {% csrf_token %}
-                        <button type="submit"
-                                class="button button-star${isStarredClass}"
-                                title="${starTitle}">
-                            <span aria-hidden="true">★</span>
-                            ${starText}
-                            <span class="star-count">${Number(education.star_count) || 0}</span>
-                        </button>
-                    </form>
+                    ${starHtml}
                     ${editHtml}
                     ${deleteHtml}
                 </div>
@@ -204,11 +194,10 @@
 
     // Membuat URL endpoint JSON beserta parameter pencarian dan filter jenjang
     function buildEducationUrl(searchQuery, degree) {
-        const params = new URLSearchParams();
-        if (searchQuery) params.set('q', searchQuery);
-        if (degree) params.set('degree', degree);
-        const queryString = params.toString();
-        return queryString ? `${BASE_EDUCATION_ENDPOINT}?${queryString}` : BASE_EDUCATION_ENDPOINT;
+        const url = new URL(BASE_EDUCATION_ENDPOINT, window.location.origin);
+        if (searchQuery) url.searchParams.set('q', searchQuery);
+        if (degree) url.searchParams.set('degree', degree);
+        return url;
     }
 
     // Fetch data education
@@ -298,12 +287,39 @@
 
     // Modal dan form tambah data hanya dirender untuk superuser, sehingga
     // elemennya bisa null di halaman pengguna lain. Pasang listener hanya jika ada.
-    const CREATE_EDUCATION_ENDPOINT = "{% url 'main:create_education_ajax' %}";
+    const CREATE_EDUCATION_ENDPOINT = BASE_EDUCATION_ENDPOINT;
     const educationForm = document.getElementById('education-form');
     const educationModal = document.getElementById('add-education-modal');
 
     function closeEducationModal() {
         if (educationModal) educationModal.hidePopover();
+    }
+
+    function educationEndpoint(pattern, id) {
+        return pattern.replace('00000000-0000-0000-0000-000000000000', id);
+    }
+
+    function apiErrorMessage(data, responseStatus) {
+        const messages = Object.values(data).flatMap(value =>
+            Array.isArray(value) ? value : [value]
+        ).filter(value => typeof value === 'string');
+        return messages.join(' ') || `Request gagal (HTTP ${responseStatus}).`;
+    }
+
+    async function writeEducation(url, method, payload) {
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: payload === undefined ? undefined : JSON.stringify(payload),
+        });
+        if (response.status === 204) return null;
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(apiErrorMessage(data, response.status));
+        return data;
     }
 
     // Mengirim data form ke server
@@ -314,28 +330,21 @@
         submitButton.disabled = true;
 
         try {
-            const response = await fetch(CREATE_EDUCATION_ENDPOINT, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': getCookie('csrftoken') },
-                body: new FormData(educationForm),
-            });
-
-            const result = await response.json().catch(() => ({}));
-
-            if (response.ok) {
-                educationForm.reset();
-                closeEducationModal();
-                showToast('Berhasil', 'Riwayat pendidikan baru berhasil ditambahkan!', 'success');
-                searchEducation();
-            } else {
-                const errorMessages = result.errors
-                    ? Object.values(result.errors).flat().map(error => error.message)
-                    : [result.message || `Terjadi kesalahan (status ${response.status}).`];
-                showToast('Gagal menambahkan riwayat pendidikan', errorMessages.join(' '), 'error');
-            }
+            const fields = new FormData(educationForm);
+            const payload = Object.fromEntries([
+                'institution_name', 'degree', 'field_of_study', 'logo_url',
+                'description', 'ended_at',
+            ].map(name => [name, fields.get(name)]));
+            payload.logo_url = payload.logo_url || null;
+            payload.ended_at = payload.ended_at || null;
+            await writeEducation(CREATE_EDUCATION_ENDPOINT, 'POST', payload);
+            educationForm.reset();
+            closeEducationModal();
+            showToast('Berhasil', 'Riwayat pendidikan baru berhasil ditambahkan!', 'success');
+            searchEducation();
         } catch (error) {
             console.error('Error adding education:', error);
-            showToast('Gagal menambahkan riwayat pendidikan', 'Tidak dapat terhubung ke server. Silakan coba lagi.', 'error');
+            showToast('Gagal menambahkan riwayat pendidikan', error.message, 'error');
         } finally {
             submitButton.disabled = false;
         }
@@ -344,6 +353,30 @@
     if (educationForm) {
         educationForm.addEventListener('submit', addEducation);
     }
+
+    gridContainer.addEventListener('click', async function (event) {
+        const button = event.target.closest('button[data-action]');
+        if (!button || button.disabled) return;
+
+        const action = button.dataset.action;
+        if (action === 'delete' && !window.confirm('Yakin ingin menghapus riwayat pendidikan ini?')) return;
+
+        button.disabled = true;
+        try {
+            const pattern = action === 'star' ? STAR_EDUCATION_ENDPOINT : DETAIL_EDUCATION_ENDPOINT;
+            await writeEducation(educationEndpoint(pattern, button.dataset.id), action === 'star' ? 'POST' : 'DELETE');
+            showToast(
+                'Berhasil',
+                action === 'star' ? 'Star berhasil diperbarui.' : 'Riwayat pendidikan berhasil dihapus.',
+                'success',
+            );
+            searchEducation();
+        } catch (error) {
+            showToast('Request gagal', error.message, 'error');
+        } finally {
+            button.disabled = false;
+        }
+    });
 
     // Start application
     fetchEducation(searchInput.value.trim(), degreeFilter.value);
