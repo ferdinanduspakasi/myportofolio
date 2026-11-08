@@ -9,45 +9,45 @@ Kelas : PBP-D
 - **Experience** — riwayat pengalaman organisasi/kepanitiaan, ditampilkan sebagai timeline
   vertikal, dengan tiap entri bisa di-expand/collapse.
 - **Dark/Light mode toggle** — tombol di navbar untuk beralih tema.
-- **Education** — riwayat pendidikan (nama institusi, jenjang, bidang studi, deskripsi),
-  diimplementasikan dengan pola Model-View-Template Django. Dalam section ini juga terdapat
-  fitur filtering berdasarkan jenjang pendidikan, dengan menerapkan method get dan fitur
-  form pada HTML5.
-- **Form & Data Delivery** lengkap: tambah data lewat `EducationForm` (ModelForm), ubah data
-  lewat form yang sama (prefilled dari data existing), hapus data lewat tombol berkonfirmasi,
-  dan penyajian datanya dalam format **JSON** (`/api/education/`) yang kemudian
-  dideserialisasi sebelum ditampilkan ke halaman web.
+- **Education** — riwayat pendidikan dengan pola Model-View-Template dan Django REST
+  Framework. Halaman menggunakan API `/api/v1/educations/` untuk daftar, detail, pencarian,
+  filter jenjang, tambah, edit, star, dan hapus data.
+- **Form & Data Delivery** — data Education divalidasi dengan `EducationSerializer`
+  (`ModelSerializer`) dan dipertukarkan sebagai JSON. Form tambah dan edit mengirim request
+  `fetch()` ke API; halaman memperbarui daftar setelah aksi berhasil.
 - **Autentikasi & Session** — registrasi (`UserCreationForm`), login (`AuthenticationForm`), dan
   logout menggunakan sistem autentikasi bawaan Django. Cookie `last_login` di-set saat login,
   dihapus saat logout, dan ditampilkan di halaman utama. Halaman daftar dan detail tetap bisa
   dibaca siapa pun tanpa login.
-- **Manajemen Peran (Authorization)** — empat peran dengan pengecekan di sisi server: pengunjung
-  tanpa login (baca saja, diarahkan ke halaman login untuk aksi yang butuh akun), pengguna biasa
-  (baca + star), **Editor** (hak pengguna biasa + ubah data, tanpa membuat/menghapus), dan
-  pemilik portofolio/superuser (semua hak). Peran Editor diatur lewat Django Group di `/admin`.
-  Aksi yang tidak diizinkan mengembalikan HTTP 403, dan tombol create/edit/delete
-  disembunyikan di template bagi pengguna yang tidak berhak.
+- **Manajemen Peran (Authorization)** — empat peran diperiksa di server: pengunjung tanpa login
+  dan pengguna biasa dapat membaca; pengguna yang login dapat memberi atau membatalkan star;
+  **Editor** dapat mengubah Education dengan `PUT`/`PATCH`; pemilik/superuser dapat membuat,
+  mengubah, dan menghapus. Peran Editor diatur lewat Django Group di `/admin`. Aksi yang tidak
+  diizinkan mengembalikan HTTP 403, dan tombol disesuaikan dengan peran di template.
 - **Star** — pengguna yang sudah login bisa memberi atau membatalkan star pada Experience dan
   Education lewat relasi `ManyToManyField` ke `User` (maksimal satu star per pengguna), dengan
   jumlah total star dan status star pengguna yang ditampilkan di tiap kartu. Aksi star hanya
   menerima `POST` beserta `{% csrf_token %}`.
 - **Role badge di navbar** *(extra feature)* — badge kecil di navbar yang menunjukkan peran akun
   yang sedang login (Owner / Editor / User).
-- **AJAX pada Education & Experience** — daftar data dimuat lewat `fetch()` dari endpoint JSON
-  (`/api/education/`, `/api/experience/`) tanpa reload halaman, lengkap dengan kondisi loading,
-  error, dan data kosong.
+- **Django REST Framework pada Education & Experience** — API berversi `/api/v1/` menyediakan
+  daftar, detail, validasi, aksi tulis, pencarian, dan star. Halaman memakai `fetch()` dengan
+  state loading, error, dan kosong; request yang mengubah data menyertakan token CSRF.
 - **Django REST Framework pada Experience** — API versi `/api/v1/experiences/`
   untuk daftar, detail, CRUD, pencarian, dan star, dengan serializer, validasi, permission,
   session/CSRF, integrasi AJAX, serta test API.
 - **Pencarian & filter tanpa reload** — pencarian institusi/bidang studi dengan *debounce* 300 ms
   dan filter jenjang, memakai `AbortController` agar respons lama tidak menimpa yang baru.
-- **Tambah data lewat modal + AJAX** — form dikirim dengan `fetch()` beserta header
-  `X-CSRFToken`, dibalas JSON (`201`/`400`/`403`) dengan pengecekan peran di server, lalu daftar
-  diperbarui otomatis dan toast notifikasi ditampilkan.
+- **Tambah data lewat modal + API** — form Education dikirim sebagai JSON dengan header
+  `X-CSRFToken`; API membalas status yang sesuai (`201`/`400`/`403`), lalu daftar diperbarui dan
+  toast notifikasi ditampilkan.
 - **Perlindungan XSS** — `strip_tags` di `clean_<field>` pada form (server) dan `escapeHtml()`
   sebelum data disisipkan ke HTML (client).
 - **Jumlah hasil & tombol hapus pencarian** *(extra feature)* — menampilkan "N hasil untuk '...'"
   dan tombol untuk mengosongkan pencarian.
+- **Pratinjau perubahan Education** *(extra feature)* — sebelum mengirim `PATCH`, dialog
+  membandingkan nilai lama dan baru agar Editor atau pemilik dapat memeriksa perubahan terlebih
+  dahulu.
 
 ## Cara Menjalankan Proyek 
 
@@ -142,6 +142,13 @@ Lalu buka `http://127.0.0.1:8000/` di browser.
     mengosongkan input lalu memuat ulang data.
 - **Tutorial 7** — Mengganti integrasi AJAX Experience ke Django REST Framework untuk API
   daftar/detail/CRUD/star, validasi serializer, permission, CSRF, dan pengujian API.
+- **Tugas 6** — Menerapkan pola DRF Tutorial 7 ke Education: `EducationSerializer`, permission
+  untuk empat peran, endpoint daftar/detail/CRUD/star di `/api/v1/educations/`, pencarian dan
+  filter query, serta integrasi halaman lewat `fetch()`. Editor hanya dapat mengubah data;
+  pemilik dapat membuat dan menghapus. Test API mencakup peran, validasi, star, dan CSRF.
+  - **Extra feature**: Sebelum perubahan disimpan, dialog edit menampilkan nilai lama dan nilai
+    baru setiap field yang berubah. Konfirmasi eksplisit mengirim `PATCH`; nilai ringkasan dibuat
+    dengan `textContent` agar input tidak diperlakukan sebagai HTML.
 
 ### Refleksi Tugas 1
 
@@ -314,6 +321,46 @@ Lalu buka `http://127.0.0.1:8000/` di browser.
    seandainya ada data kotor yang lolos.
 
 
+### Refleksi Tugas 6
+
+1. REST (Representational State Transfer) adalah sebuah gaya arsitektur dalam perancangan 
+   API yang memiliki prinsip-prinsip tertentu, seperti penggunaan resource yang direpresentasikan 
+   melalui URL, komunikasi stateless, serta penggunaan HTTP methods sesuai fungsinya. Mengembalikan 
+   data dalam format JSON saja belum cukup untuk disebut RESTful karena JSON hanyalah format 
+   pertukaran data, sedangkan REST mengatur bagaimana API dirancang dan berkomunikasi. PUT digunakan 
+   untuk mengganti keseluruhan representasi suatu resource, sedangkan PATCH digunakan untuk memperbarui 
+   sebagian atribut resource. Contohnya, ketika ingin mengubah seluruh data profil pengguna, kita 
+   menggunakan PUT, sedangkan jika hanya ingin mengubah alamat email tanpa mengubah atribut lainnya, 
+   kita menggunakan PATCH.
+
+2. Serializer pada Django REST Framework berperan untuk mengonversi data kompleks, seperti objek model 
+   Django, menjadi format yang dapat dikirim melalui API, seperti JSON, serta melakukan proses sebaliknya, 
+   yaitu mengubah data dari request menjadi objek Python yang dapat disimpan ke database. Selain itu, 
+   serializer juga menyediakan validasi terhadap data yang diterima, misalnya memastikan bahwa suatu field wajib 
+   diisi atau memiliki format tertentu. Dibandingkan merakit dictionary secara manual menggunakan JsonResponse 
+   seperti pada Tutorial 05, penggunaan serializer membuat kode lebih terstruktur, reusable, mudah dirawat, dan 
+   mengurangi kebutuhan untuk menulis proses konversi serta validasi secara manual.
+
+3. Autentikasi (authentication) adalah proses untuk memverifikasi identitas pengguna yang melakukan request, misalnya 
+   dengan memeriksa session atau token, sedangkan otorisasi (authorization) adalah proses menentukan apakah pengguna 
+   tersebut memiliki hak untuk melakukan tindakan tertentu terhadap suatu resource. Dalam Django REST Framework, 
+   autentikasi menentukan siapa pengguna yang melakukan request, sementara permission class menentukan apakah pengguna 
+   tersebut diizinkan melakukan tindakan yang diminta. Pemeriksaan hak akses harus dilakukan menggunakan permission 
+   class di server karena tampilan frontend, termasuk template, dapat dimodifikasi atau dilewati oleh pengguna. 
+   Menyembunyikan tombol hanya membatasi apa yang terlihat di antarmuka, bukan mencegah pengguna mengirim request 
+   secara langsung ke endpoint API.
+
+4. Ketika API menggunakan SessionAuthentication, browser mengirimkan cookie session secara otomatis bersama request, 
+   sehingga terdapat risiko serangan CSRF (Cross-Site Request Forgery), yaitu ketika situs berbahaya mencoba membuat 
+   browser pengguna yang sedang login mengirimkan request tanpa sepengetahuannya. Oleh karena itu, request yang mengubah data, 
+   seperti POST, PUT, PATCH, dan DELETE, tetap memerlukan token CSRF untuk memastikan bahwa request berasal dari sumber yang sah. 
+   Sementara itu, force_authenticate pada pengujian Django REST Framework secara langsung menetapkan pengguna yang sudah 
+   terautentikasi tanpa menjalankan proses autentikasi normal, termasuk mekanisme pemeriksaan CSRF pada SessionAuthentication. 
+   Akibatnya, pengujian yang hanya menggunakan force_authenticate tidak dapat membuktikan bahwa perlindungan CSRF benar-benar 
+   berjalan; pengujian tersebut perlu menggunakan mekanisme autentikasi session yang sesungguhnya dan mengaktifkan pemeriksaan 
+   CSRF.
+
+
 ## AI Disclosure
 
 **Tugas 1** - Saya menggunakan Claude (Anthropic, via claude.ai) untuk membantu pengerjaan Tugas 1 ini.
@@ -406,3 +453,19 @@ akhir harus saya lakukan sendiri. Kodenya cenderung padat dan melebihi permintaa
 refleksinya cenderung generik sehingga perlu saya sesuaikan dengan kode proyek. Terdapat juga beberapa
 bug yang muncul, misalnya posisi jumlah dan hapus pencarian (extra feature) dimana terdapat kesalahan
 pada posisi htmlnya, yang saya perbaiki secara manual.
+
+
+**Tugas 6** - Saya menggunakan OpenAI Codex untuk membantu pengerjaan Tugas 6 ini.
+Chat link: 
+
+Bagian yang dibantu AI:
+- Membantu memahami soal dan semua requirements tugas 6.
+- Mengimplementasikan serializer, permission, endpoint, integrasi halaman Education, test API, dialog pratinjau 
+perubahan, dan dokumentasi ini.
+
+Strategi prompting: Saya memberikan PDF tugas dan source code proyek, lalu meminta implementasi
+bertahap agar tiap bagian dapat saya tinjau dan commit sendiri. 
+
+Keterbatasan yang saya temukan: Pemeriksaan dan pengujian manual masih tetap penting: AI dapat salah menafsirkan 
+instruksi atau membuat asumsi sendiri, sehingga hasilnya perlu dibandingkan dengan soal, dan diperiksa secara manual 
+melalui localhost.
